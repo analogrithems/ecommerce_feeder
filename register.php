@@ -55,7 +55,6 @@ function ef_foo($args){
 add_filter('xmlrpc_methods', 'init_EF_XMLRPC');
 
 if (is_admin()){
-	include_once('export_pickgen.php');
 	function wpsc_add_data_feeder_page($page_hooks, $base_page) {
 		global $logger;
 		global $data_feed_page;
