@@ -32,7 +32,7 @@ include_once('classes/password.migration.class.php');
 include_once('wpec_data_feeder_scheduler.php');
 new WPSC_EC_Password_Migrator();
 
-$ecom_plugin = WP_PLUGIN_DIR .'/ecommerce_feeder';
+$ecom_plugin = WP_PLUGIN_DIR . '/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
 
 /* The activation hook is executed when the plugin is activated. */
 register_activation_hook(__FILE__,'wpec_data_feeder_activation');
@@ -184,9 +184,9 @@ function display_wpe_data_feeder(){
 */
 function data_feeder_help($contextual_help, $screen_id, $screen) {
 
-	global $data_feed_page;
+	global $ecom_plugin, $data_feed_page;
 	if ($screen_id == $data_feed_page) {
-		$contextual_help = file_get_contents('views/help.php');
+		$contextual_help = file_get_contents($ecom_plugin.'/views/help.php');
 	}
 	return $contextual_help;
 }
