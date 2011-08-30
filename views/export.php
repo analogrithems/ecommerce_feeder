@@ -27,25 +27,46 @@ global $objects, $types, $schedules, $db_drivers;
 		<div id="poststuff" class="postbox">
                 	<h3 class="hndle">Export Data</h3>
 				<div class="inside">
-					<script>
-						jQuery(document).ready( function() {
-						    jQuery('.hideonstart').hide();
-						    jQuery('select.wpec_data_feeder_destination').change(function() {
-							jQuery('.hideonstart').hide();
-							shown = jQuery(this).children("option:selected").val();
-							jQuery('#'+shown).show();
-						    });
-						});
-					</script>
+                                        <script>
+                                                jQuery(document).ready( function() {
+                                                   var activeScripts = new Array();
+                                                        <?php   
+                                                                //load all the active scripts
+                                                                $scripts = array('none'=>__('Select Script','ecommerce_feeder'));
+                                                                $i = 0;
+                                                                foreach($job->scripts['export'] as $script=>$options){
+                                                                        $tmp = array_keys($options);
+                                                                        $scripts[$script] = $tmp[0];
+                                                                        echo "activeScripts[{$i}] = '".$script."';\n";
+                                                                        $i++;
+                                                                }
+                                                        ?>
+                                                   selected = jQuery('#wpec_data_feeder_type').children("option:selected").val();
+                                                   jQuery('#scriptsForm div span :input').attr('disabled', true);
+                                                   jQuery('.hideonstart').hide();
+                                                   if(selected != 'none'){
+                                                        jQuery('#'+selected).show();
+                                                        jQuery('#'+selected+' span :input').attr('disabled', false);
+                                                   }
+
+                                                   jQuery('#wpec_data_feeder_type').change(function() {
+                                                        jQuery('#scriptsForm div span :input').attr('disabled', true);
+                                                        jQuery('.hideonstart').hide();
+                                                        shown = jQuery(this).children("option:selected").val();
+                                                        jQuery('#'+shown).show();
+                                                        jQuery('#'+shown+' span :input').attr('disabled', false);
+                                                   });
+                                                });
+                                        </script>
 					<table class="form-table">
                                                 <tr valign="top">
                                                         <th scope="row">Name</th>
                                                         <td><input type='text' name="wpec_data_feeder[name]" value="<?php echo fromRequest('name'); ?>"></td>
                                                 </tr>
                                                 <tr valign="top">
-                                                        <th scope="row">Choose a Destination</th>
+                                                        <th scope="row">Choose a Source</th>
                                                         <td><select id='wpec_data_feeder_type' name='wpec_data_feeder[type]'>
-								<?php echo htmlOptions($types, $type); ?>
+                                                                <?php echo htmlOptions($scripts, fromRequest('type')); ?>
                                                             </select>
                                                         </td>
                                                 </tr>
@@ -58,37 +79,11 @@ global $objects, $types, $schedules, $db_drivers;
                                                         </td>
                                                 </tr>
 					</table>
-					<div id='db' class='hideonstart'>
-						<span class='inputLine'><strong>Select DB Type: </strong>
-							<select name="wpec_data_feeder[db_driver]">
-								<option value='mysql'>MySQL</option>
-								<option value='mssql'>MS SQL</option>
-								<option value='oracle'>Oracle</option>
-							</select>
-						</span>
-						<span class='inputLine'>
-							<strong>DB Server: </strong><input type='text' name='wpec_data_feeder[dbhost]' value='<?php echo fromRequest('dbhost'); ?>'>
-							<strong>DB Name: </strong><input type='text' name='wpec_data_feeder[dbname]' value='<?php echo fromRequest('dbname'); ?>'>
-						</span>
-						<span class='inputLine'>
-							<strong>DB User: </strong><input type='text' name='wpec_data_feeder[dbuser]' value='<?php echo fromRequest('dbuser');?>'>
-							<strong>DB Password: </strong><input type='password' name='wpec_data_feed[dbpassword]' value='<?php echo fromRequest('dbpassword');?>'>
-						</span>
-						<span class='inputLine'>
-							<strong>Query: </strong>
-							<textarea name="wpec_data_feeder[source_sql]" rows="20" cols="70"><?echo fromRequest('source_sql');?></textarea>
-						</span>
-					</div>
-					<div id='xml' class='hideonstart'>
-						<span class='inputLine'>
-							<strong>XML URL: </strong><input type='text' name='wpec_data_feeder[source_xml]' value='<?php echo fromRequest('source_xml');?>'>
-						</span>
-					</div>
-					<div id='csv' class='hideonstart'>
-						<span class='inputLine'>
-							<strong>CSV URL: </strong><input type='text' name='wpec_data_feeder[source_csv]' value='<?php echo fromRequest('source_csv');?>'>
-						</span>
-					</div>
+				</div>
+				<div id='scriptsForm'>
+					<?php
+						echo apply_filters('ecommerce_feeder_export_form','');
+					?>
 				</div>
 				<table class="form-table">
 					<tr valign="top">

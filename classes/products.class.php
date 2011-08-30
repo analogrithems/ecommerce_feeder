@@ -592,4 +592,20 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		wp_reset_postdata();
 		return($prod_tmp);
 	}
+
+	/**
+	* getProductImages($productID) get all the images for a specific product.
+	*
+	* @param int $productID
+	* @return mixed
+	*/
+	function getProductImages($productID){
+		$images = get_children(array(
+			'post_parent' => get_the_ID(),
+			'post_type' => 'attachment',
+			'numberposts' => 1,
+			'post_mime_type' => 'image',)
+		);
+		return $images;
+	}
 }

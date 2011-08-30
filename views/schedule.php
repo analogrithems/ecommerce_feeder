@@ -1,7 +1,7 @@
 <?php 
 
 //get our global vars inported
-global $objects, $types, $schedules, $db_drivers; 
+global $objects, $schedules;
 ?>
 <div class="clear"></div>
 <table class="widefat tag fixed" cellspacing="0">
@@ -32,25 +32,25 @@ global $objects, $types, $schedules, $db_drivers;
 	?>
         <tbody id="the-list" class="list:tag">
 	<?php
-		foreach($scheduledJobs as $schedule){
+		foreach($scheduledJobs as $id=>$schedule){
 		?>
-			<tr id='schedule-<?php echo $schedule['id']; ?>' class="alternate">
-			<th scope="row" class="check-column"> <input type="checkbox" name="delete_tags[]" value="<?php echo $schedule['id']; ?>" /></th>
+			<tr id='schedule-<?php echo $id; ?>' class="alternate">
+			<th scope="row" class="check-column"> <input type="checkbox" name="delete_tags[]" value="<?php echo $id; ?>" /></th>
 			<td class="name column-name">
-				<strong><a class='row-title' href='admin.php?page=wpsc_module_data_feeder&wpec_data_feeder[direction]=<?php echo $schedule['direction']; ?>&id=<?php echo $schedule['id']; ?>&submit=Edit' title='Edit Job'><?php echo $schedule['name']; ?></a></strong>
+				<strong><a class='row-title' href='admin.php?page=wpsc_module_data_feeder&wpec_data_feeder[direction]=<?php echo $schedule['direction']; ?>&id=<?php echo $id; ?>&submit=Edit' title='Edit Job'><?php echo $schedule['name']; ?></a></strong>
 				<br />
 				<div class="row-actions">
-					<span class='edit'><a href="admin.php?page=wpsc_module_data_feeder&wpec_data_feeder[direction]=<?php echo $schedule['direction']; ?>&id=<?php echo $schedule['id']; ?>&submit=Edit">Edit</a> | </span>
-					<span class='delete'><a class='delete-tag' href='admin.php?page=wpsc_module_data_feeder&wpec_data_feeder[direction]=<?php echo $schedule['direction']; ?>&id=<?php echo $schedule['id']; ?>&submit=Delete' onclick="return confirm('Are you sure you want to delete?')">Delete</a></span>
+					<span class='edit'><a href="admin.php?page=wpsc_module_data_feeder&wpec_data_feeder[direction]=<?php echo $schedule['direction']; ?>&id=<?php echo $id; ?>&submit=Edit">Edit</a> | </span>
+					<span class='delete'><a class='delete-tag' href='admin.php?page=wpsc_module_data_feeder&wpec_data_feeder[direction]=<?php echo $schedule['direction']; ?>&id=<?php echo $id; ?>&submit=Delete' onclick="return confirm('Are you sure you want to delete?')">Delete</a></span>
 				</div>
-				<div class="hidden" id="inline_<?php echo $schedule['id']; ?>">
+				<div class="hidden" id="inline_<?php echo $id; ?>">
 					<div class="name"><?php echo $schedule['name']; ?></div>
-					<div class="type"><?php echo $types[$schedule['type']]; ?></div>
+					<div class="type"><?php echo $schedule['type']; ?></div>
 					<div class="direction"><?php echo $schedule['direction']; ?></div>
 					<div class="parent">0</div>
 				</div>
 			</td>
-			<td class="type column-type"><?php echo $types[$schedule['type']]; ?></td>
+			<td class="type column-type"><?php echo $schedule['type']; ?></td>
 			<td class="slug column-slug"><?php echo $schedule['direction']; ?></td>
 			<td class="schedule column-schedule"><?php echo $schedule['schedule']; ?></td>
 		<?php

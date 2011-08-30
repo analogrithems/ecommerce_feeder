@@ -23,12 +23,20 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 
 	var $customers;
 	var $profiles;
+	var $scripts;
+	var $savedJobs;
 	
 	function __construct(){
                 global $wpdb;
                 define('WPEC_ECOMM_FEEDER', $wpdb->prefix.'data_feeder');
                 $this->mydb = WPEC_ECOMM_FEEDER;
 		parent::__construct();
+	}
+
+	function init(){
+		$this->savedJobs = get_option('WPEC_Jobs');
+		$this->scripts = apply_filters('ecommerce_feeder_register_script',$this->scripts);
+		return($this->scripts);
 	}
 
 	/**
@@ -40,8 +48,15 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	 * @return boolean
 	 */
 	function runSave($data){
-		$result = $this->save($data);
-		return $result;
+		$slug = sanitize_title($data['name']);
+		if(isset($this->savedJobs) && !empty($this->savedJobs)){
+			$this->savedJobs[$slug] = $data;
+			update_option('WPEC_Jobs', $this->savedJobs);
+		}else{
+			$this->savedJobs[$slug] = $data;
+			add_option('WPEC_Jobs', $this->savedJobs,'','no');
+		}
+		$_SESSION['status_msg'] = __("You're Job Was Saved",'ecommerce_feeder');
 	}
 
 	/**
@@ -63,7 +78,7 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 		}
 		if(!$this->isGood($data['direction']) && $_REQUEST['direction']) $data['direction'] = $_REQUEST['direction'];
 		switch($data['type']){
-			case 'db':
+			case 'sqlJobs':
 				if(!$this->isGood($data['name']) ){
 					$this->setError("Whatever name you give this job must be unique!");
 					$valid=false;
@@ -88,57 +103,34 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 					$this->setError("You Must Specify The Database to Connect to!");
 					$valid=false;
 				}
-				if(!$this->isGood($data['source']['sql'])){
+				if(!$this->isGood($data['source_sql'])){
 					$this->setError("What am I supposed to do with this?  Give me a SQL Query!");
 					$valid=false;
-				}else{
-					$source = $data['source']['sql'];
-					unset($data['source']);
-					$data['source'] = $source;
 				}
 				$this->logger->debug(print_r($data,true));
 				if($valid){
-					$result = $this->runSave($data);
-					if($result){
-						unset($_REQUEST['wpec_data_feeder']['action']);
-						return true;
-					}
+					$this->runSave($data);
+					return true;
 				}else{
 					return false;
 				}
 
 				break;
-			case 'xml':
+			case 'xmlJobs':
 				if(!$this->isGood($data['source_xml'])){
 					$this->setError("Must Give A URL to Download XML From!");
 					return false;
-				}else{
-					$source = $data['source_xml'];
-					unset($data['source_xml']);
-					$data['source'] = $source;
 				}
-				unset($data['db_driver']);
-				unset($data['dbhost']);
-				unset($data['dbuser']);
-				unset($data['dbpassword']);
-				unset($data['dbname']);
-				$result = $this->runSave($data);
+				$this->runSave($data);
+				return true;
 				break;
-			case 'csv':
+			case 'csvJobs':
 				if(!$this->isGood($data['source_csv'])){
 					$this->setError("Must Give A URL to Download CSV From!");
 					return false;
-				}else{
-					$source = $data['source_csv'];
-					unset($data['source_csv']);
-					$data['source'] = $source;
 				}
-				unset($data['db_driver']);
-				unset($data['dbhost']);
-				unset($data['dbuser']);
-				unset($data['dbpassword']);
-				unset($data['dbname']);
-				$result = $this->runSave($data);
+				$this->runSave($data);
+				return true;
 				break;
 			default:
 				$this->setError("You Must Choose A Source!");
@@ -157,28 +149,6 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	function prepareImportForm($data=false){
 		global $objects, $types, $db_drivers;
 		$objects = array('customers'=>'Customer Accounts', 'products'=>'Products','orders'=>'Order History');
-		$types = array('none'=>'Select Type', 'db'=>'SQL DB', 'xml'=>'XML', 'csv'=>'CSV');
-		$db_drivers = array('Select a Driver','mysql'=>'MySQL','mssql'=>'MS SQL', 'oracle'=>'Oracle');
-		$this->logger->info("Preping:".print_r($data,1).print_r($_REQUEST['wpec_data_feeder'],1));
-		if($this->isGood($data)  && isset($data['source'])){
-			$_REQUEST['wpec_data_feeder'] = $data;
-			switch($data['type']){
-				case 'db':
-				case 'sql':
-					unset($_REQUEST['wpec_data_feeder']['source']);
-					$_REQUEST['wpec_data_feeder']['source_sql'] = $data['source'];
-					break;
-				case 'csv':
-					unset($_REQUEST['wpec_data_feeder']['source']);
-					$_REQUEST['wpec_data_feeder']['source_csv'] = $data['source'];
-					break;
-				case 'xml':
-					unset($_REQUEST['wpec_data_feeder']['source']);
-					$_REQUEST['wpec_data_feeder']['source_xml'] = $data['source'];
-					break;
-			}
-		}
-				
 	}
 
 	/**
@@ -190,23 +160,6 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	 */
 	function prepareExportForm($data=false){
 		$this->prepareImportForm($data);
-	}
-
-	/**
-	 * prepareScheudler([mixed $data=false])
-	 *
-	 * Get any template variables ready that will be needed for the admin forms.  $data can be passed to prepopulate a form for updates or re-submits
-	 *
-	 * @params mixed $data
-	 */
-	function prepareScheudler($data=false){
-		global $schedules, $times;
-		if(!$data && $this->isGood($_REQUEST['wpec_data_feeder'])){
-			$data = $_REQUEST['wpec_data_feeder'];
-		}
-		foreach($schedules as $key=>$value){
-			$times[$key] = $schedules[$key]['display'];
-		}
 	}
 
 	/**
@@ -226,21 +179,20 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	 * @returns mixed 
 	 */
 	function getScheudledJobs($options=false){
-		$opts = false;
-		if($this->isGood($options['id']) && is_numeric($options['id'])){
-			$opts['filter'] = 'id='.$options['id'];
+		if($this->isGood($options['id']) && $this->isGood($this->savedJobs[$options['id']]) ){
+			return $this->savedJobs[$options['id']];
 		}else{
 			if($this->isGood($options['direction']) && in_array($options['direction'],array('import','export'))){
-				$opts['filter'][]='direction=\''.$options['direction'].'\'';
-			}elseif($this->isGood($options['direction'])){
-				$this->logger->error("WPEC_Jobs::getScheudledJobs(".print_r($options,true).") bad direction specified, should be import or export");
-			}
-			if($this->isGood($options['schedule'])){
-				$opts['filter'][]='schedule=\''.$options['schedule'].'\'';
+				foreach($this->savedJobs as $name=>$job){
+					//Find all the job types you want to display
+					if($job['direction'] == $options['direction']){
+						$results[$name] = $job;
+					}
+				}
+			}else{
+				return $this->savedJobs;
 			}
 		}
-		$results = $this->read($opts);
-		$this->logger->info("WPEC_Jobs::getScheudledJobs(".print_r($options,true).") returned ".print_r($results,true));
 		return $results;
 	}
 
@@ -263,7 +215,7 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	 * @return boolean (true|false) for if it completed successfully or not
 	 */
 	function runJobs($options=false){
-		if($this->isGood($options['id']) && is_numeric($options['id'])){
+		if($this->isGood($options['id']) && $this->isGood($this->savedJobs[$options['id']]) ){
 			$jobs = $this->getScheudledJobs(array('id'=>$options['id']));
 		}elseif($this->isGood($options['schedule'])){
 			$jobs = $this->getScheudledJobs(array('schedule'=>$options['schedule']));
@@ -298,155 +250,12 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	function executeJob($instructions){
 		extract($instructions);	
 		set_time_limit(0);
-		switch($direction){
-			case 'import':
-				switch($type){
-					case 'csv':
-						//If you uploaded a file via browser, use that otherwise use whatever url was passed
-						if(file_exists($_FILES['source']['tmp_name'])){
-							 $file = $_FILES['source']['tmp_name'];
-							$this->logger->info("Using Uploaded file:".print_r($_FILES,true));
-						}else{
-							//TODO clean this up to
-							if(isset($source_csv) && parse_url($source_csv)) {
-								$result = $this->getFile($source_csv);
-								$this->logger->info("GetFile:".print_r($result,true));
-								if(isset($result['tmp_name']) && 
-									file_exists($result['tmp_name'])){
-									$file = $result['tmp_name'];
-								}
-							}
-						}
-						$dataSet = $this->csv2array($file);
-						break;
-					case 'xml':
-						if(file_exists($_FILES['source']['tmp_name'])){
-							 $file = $_FILES['source']['tmp_name'];
-							$this->logger->info("Using Uploaded file:".print_r($_FILES,true));
-						}else{
-							if(isset($source_xml) && parse_url($source_xml)) {
-								$result = $this->getFile($source_xml);
-								$this->logger->info("GetFile from URL:".print_r($result,true));
-								if(isset($result['tmp_name']) && 
-									file_exists($result['tmp_name'])){
-									$file = $result['tmp_name'];
-								}
-							}
-						}
-						
-						//get xml into array
-						include_once('xml.class.php');
-						$xml = new EF_XML_Helper();
-						$dataSet = $xml->toArray(file_get_contents($file));
-						break;
-					case 'sql':
-					case 'db':
-						//connect to sql
-						$db_handler = $this->getDSN(array('driver'=>$db_driver,'host'=>$dbhost,'dbname'=>$dbname,'user'=>$dbuser,'password'=>$dbpassword));
-						//get sql into array
-						$source = $this->isGood($source['sql']) ? $source['sql'] : $source;
-						//$sth = $db_handler->prepare($source);
-						//$sth->execute();
-
-						$result = $db_handler->query($source);
-						$dataSet = $result->fetchAll(PDO::FETCH_ASSOC);
-						$this->logger->info("Result of connecting to db:".print_r($db_handler,1));
-						$this->logger->info("Here is what the custom SQL returned:".print_r($dataSet,1));
-						break;
-					default:
-						$this->logger->error("Failed to Run Job, Can't find Type:".print_r($instructions,true));
-						break;
-				}
-				switch($object){
-					case 'orders':
-						//We are importing orders, run it
-						include_once('orders.class.php');
-						$this->logger->info("Trying tp update orders:".print_r($dataSet[1],true));
-						$orders = new WPEC_Orders();
-						$orders->updateOrders($dataSet);
-						break;
-					case 'customers':
-						//We are importing customers, run it
-						include_once('users.class.php');
-						global $usersAdded, $usersUpdated;
-						$this->logger->info("Trying to update customers:".print_r($dataSet,true));
-						$customers = new WPEC_Users();
-						$results = $customers->updateUsers($dataSet);
-						$_SESSION['status_msg'] = "{$results['added']}/{$results['updated']} ".__('Users Added/Updated','wpsc');
-						break;
-					case 'products':
-						//We are importing products, run it
-						include_once('products.class.php');
-						global $productUpdates, $variantUpdates;
-						$this->logger->info("Trying tp update products:".print_r($dataSet,true));
-						$products = new WPEC_Products();
-						$products->updateProduct($dataSet);
-						$_SESSION['status_msg'] = "{$productUpdates}/{$variantUpdates} ".__('Products/Variants updated','wpsc');
-						break;
-					default:
-						$this->logger->error("Failed to Run Job, incorrect object.:".print_r($instructions,true));
-						break;
-				}
-				break;
-			case 'export':
-				switch($object){
-					case 'orders':
-						//We are exporting the orders
-						include_once('orders.class.php');
-						$orders = new WPEC_Orders();
-						$dataSets = $orders->exportOrders();
-						//$this->logger->info("Trying to export orders:".print_r($dataSets,true));
-						break;
-					case 'customers':
-						//We are exporting the customers
-						include_once('users.class.php');
-						$customers = new WPEC_Users();
-						$dataSets = $customers->exportUsers();
-						//$this->logger->info("Trying to export customers:".print_r($dataSets,true));
-						break;
-					case 'products':
-						//We are exporting the products
-						include_once('products.class.php');
-						$products = new WPEC_Products();
-						$dataSets = $products->exportProducts();
-						//$this->logger->info("Trying to export products:".print_r($dataSet,true));
-						break;
-					default:
-						$this->logger->error("Failed to Run Job, incorrect object.:".print_r($instructions,true));
-						break;
-				}
-				switch($type){
-					case 'csv':
-						//get csv into array
-						header("Content-Type: application/csv");
-						header ("Content-disposition: attachment; filename=wpec_export.csv") ;
-						echo $this->array2csv($dataSets);
-						exit();
-						break;
-					case 'xml':
-						//get xml into array
-						include_once('xml.class.php');
-						$xml = new EF_XML_Helper();
-						header ("Content-Type:text/xml");
-						echo $xml->toXML($dataSets,'Order');
-						exit();
-						break;
-					case 'sql':
-					case 'db':
-						//connect to sql
-						$db_handler = $this->getDSN(array('driver'=>$db_driver,'host'=>$dbhost,'dbname'=>$dbname,'user'=>$dbuser,'password'=>$dbpassword));
-						//get sql into array
-						break;
-					default:
-						$this->logger->error("Failed to Run Job, Can't Find Export Type:".print_r($instructions,true));
-						break;
-				}
-				break;
-			default:
-				$this->logger->error("Failed to Run Job, Not sure if it's import or export:".print_r($direction,true));
-				break;
+		if(isset($direction) && $direction == 'import' && isset($type) &&  array_key_exists($type, $this->scripts[$direction])){
+			do_action('ecommerce_feeder_run_import_'.$type,$object,$instructions);
+		}elseif(isset($direction) && $direction == 'export' && isset($type) &&  array_key_exists($type, $this->scripts[$direction])){
+			$dataSets = $this->runDataTypeExport($object);
+			do_action('ecommerce_feeder_run_export_'.$type,$object,$dataSets);
 		}
-
 	}	
 
 	function getDSN($opts){
@@ -473,7 +282,73 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	* @param int $id id of job to delete
 	*/
 	function deleteJob($id){
-		$this->delete($id);
+		if(isset($this->savedJobs[$id])){
+			unset($this->savedJobs[$id]);
+			update_option('WPEC_Jobs',$this->savedJobs);
+		}
 	}
 
+	function runDataTypeImport($dataType,$dataSet){
+		switch($dataType){
+			case 'orders':
+				//We are importing orders, run it
+				include_once('orders.class.php');
+				$this->logger->info("Trying tp update orders:".print_r($dataSet[1],true));
+				$orders = new WPEC_Orders();
+				$orders->updateOrders($dataSet);
+				break;
+			case 'customers':
+				//We are importing customers, run it
+				include_once('users.class.php');
+				global $usersAdded, $usersUpdated;
+				$this->logger->info("Trying to update customers:".print_r($dataSet,true));
+				$customers = new WPEC_Users();
+				$results = $customers->updateUsers($dataSet);
+				$_SESSION['status_msg'] = "{$results['added']}/{$results['updated']} ".__('Users Added/Updated','wpsc');
+				break;
+			case 'products':
+				//We are importing products, run it
+				include_once('products.class.php');
+				global $productUpdates, $variantUpdates;
+				$this->logger->info("Trying tp update products:".print_r($dataSet,true));
+				$products = new WPEC_Products();
+				$products->updateProduct($dataSet);
+				$_SESSION['status_msg'] = "{$productUpdates}/{$variantUpdates} ".__('Products/Variants updated','wpsc');
+				break;
+			default:
+				$this->logger->error("Failed to Run Job, incorrect object.:".print_r($instructions,true));
+				break;
+		}
+	}
+
+	
+	function runDataTypeExport($dataType){
+		switch($dataType){
+			case 'orders':
+				//We are exporting the orders
+				include_once('orders.class.php');
+				$orders = new WPEC_Orders();
+				$dataSets = $orders->exportOrders();
+				//$this->logger->info("Trying to export orders:".print_r($dataSets,true));
+				break;
+			case 'customers':
+				//We are exporting the customers
+				include_once('users.class.php');
+				$customers = new WPEC_Users();
+				$dataSets = $customers->exportUsers();
+				//$this->logger->info("Trying to export customers:".print_r($dataSets,true));
+				break;
+			case 'products':
+				//We are exporting the products
+				include_once('products.class.php');
+				$products = new WPEC_Products();
+				$dataSets = $products->exportProducts();
+				//$this->logger->info("Trying to export products:".print_r($dataSet,true));
+				break;
+			default:
+				$this->logger->error("Failed to Run Job, incorrect object.:".print_r($instructions,true));
+				break;
+		}
+		return($dataSets);
+	}
 }

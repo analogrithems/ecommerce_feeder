@@ -1,7 +1,7 @@
 <?php 
 
 //get our global vars inported
-global $objects, $types, $times, $schedules, $db_drivers; 
+global $objects, $types, $schedules, $db_drivers, $job;
 ?>
         <h2>WordPress eCommerce Data Feeder Import</h2>
 
@@ -30,16 +30,32 @@ global $objects, $types, $times, $schedules, $db_drivers;
 				<div class="inside">
 					<script>
 						jQuery(document).ready( function() {
+						   var activeScripts = new Array();
+							<?php
+								//load all the active scripts
+								$scripts = array('none'=>__('Select Script','ecommerce_feeder'));
+								$i = 0;
+								foreach($job->scripts['import'] as $script=>$options){
+									$tmp = array_keys($options);
+									$scripts[$script] = $tmp[0];
+									echo "activeScripts[{$i}] = '".$script."';\n";
+									$i++;
+								}
+							?>
 						   selected = jQuery('#wpec_data_feeder_type').children("option:selected").val();
+						   jQuery('#scriptsForm div span :input').attr('disabled', true);
 						   jQuery('.hideonstart').hide();
 						   if(selected != 'none'){
 							jQuery('#'+selected).show();
+							jQuery('#'+selected+' span :input').attr('disabled', false);
 						   }
 
 						   jQuery('#wpec_data_feeder_type').change(function() {
+						        jQuery('#scriptsForm div span :input').attr('disabled', true);
 							jQuery('.hideonstart').hide();
 							shown = jQuery(this).children("option:selected").val();
 							jQuery('#'+shown).show();
+							jQuery('#'+shown+' span :input').attr('disabled', false);
 						   });
 						});
 					</script>
@@ -51,7 +67,7 @@ global $objects, $types, $times, $schedules, $db_drivers;
 						<tr valign="top">
 							<th scope="row">Choose a Source</th>
 							<td><select id='wpec_data_feeder_type' name='wpec_data_feeder[type]'>
-								<?php echo htmlOptions($types, fromRequest('type')); ?>
+								<?php echo htmlOptions($scripts, fromRequest('type')); ?>
 							    </select>
 							</td>
 						</tr>
@@ -64,47 +80,14 @@ global $objects, $types, $times, $schedules, $db_drivers;
 							</td>
 						</tr>
 					</table>
-					<div id='db' class='hideonstart'>
-						<span class='inputLine'><strong>Select DB Type: </strong>
-						    <select name='wpec_data_feeder[db_driver]'>
-								<?php echo htmlOptions($db_drivers, fromRequest('db_driver')); ?>
-						    </select>
-						</span>
-						<span class='inputLine'>
-							<strong>DB Server: </strong><input type='text' name='wpec_data_feeder[dbhost]' value='<?php echo fromRequest('dbhost'); ?>'>
-							<strong>DB Name: </strong><input type='text' name='wpec_data_feeder[dbname]' value='<?php echo fromRequest('dbname'); ?>'>
-						</span>
-						<span class='inputLine'>
-							<strong>DB User: </strong><input type='text' name='wpec_data_feeder[dbuser]' value='<?php echo fromRequest('dbuser'); ?>'>
-							<strong>DB Password: </strong><input type='password' name='wpec_data_feeder[dbpassword]' value='<?php echo fromRequest('dbpassword'); ?>'>
-						</span>
-						<span class='inputLine'>
-							<strong>Query: </strong>
-							<textarea name="wpec_data_feeder[source][sql]" rows="20" cols="70"><?php echo fromRequest('source_sql');?></textarea>
-						</span>
-					</div>
-					<div id='xml' class='hideonstart'>
-						<span class='inputLine'>
-							<strong>XML URL: </strong><input type='text' name='wpec_data_feeder[source][xml]' value='<?php echo fromRequest('source_xml'); ?>'> or <input type='file' name='source'>
-						</span>
-					</div>
-					<div id='csv' class='hideonstart'>
-						<span class='inputLine'>
-							<strong>CSV URL: </strong><input type='text' name='wpec_data_feeder[source_csv]' value='<?php echo fromRequest('source_csv'); ?>'> or <input type='file' name='source'>
-						</span>
+					<div id='scriptsForm'>
+						<?php
+							
+							echo apply_filters('ecommerce_feeder_import_form','');
+						?>
 					</div>
 				</div>
 				<table class="form-table">
-<!--
-					<tr valign="top">
-						<th cols='2' scope="row">
-						    <strong>Schedule:</strong>
-						    <select name='wpec_data_feeder[schedule]'>
-							<?php echo htmlOptions($times, fromRequest('schedule')); ?>
-						    </select>
-						</th>
-					</tr>
--->
 					<tr valign="top">
 						<th scope="row">
 						<?php if(fromRequest('id') != ''){ ?>

@@ -5,7 +5,8 @@ class WPSC_EC_Password_Migrator extends WPEC_ecommerce_feeder{
 	var $logger;
 
         public function __construct() {
-                $this->logger = Logger::getLogger(__CLASS__);
+                global $logger;
+                $this->logger = $logger;
 		add_filter('check_password',  array($this, 'migratePassword'), 10,4);
 	}
 

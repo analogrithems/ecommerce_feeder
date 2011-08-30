@@ -15,30 +15,22 @@ Author URI: http://www.analogrithems.com
  * @license http://www.analogrithems.com/rant/portfolio/project-licensing/
  */
 
-define('ECOMMERCE_FEEDER', '20110701');
 global $logger, $ecom_plugin;
+define('ECOMMERCE_FEEDER', '20110701');
+$ecom_plugin = WP_PLUGIN_DIR . '/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
 //Implement a real debugging system
-require_once ('classes/log4php/Logger.php');
-Logger::configure(dirname(__FILE__).'/log4php.properties');
-$logger = Logger::getLogger('Ecommerce_Feeder');
+require_once ($ecom_plugin.'classes/WP_Logger.class.php');
+$logger = new WP_Logger($ecom_plugin.'/ecommerce_feeder.log');
 
 
 include_once('classes/WPEC_ecommerce_feeder.class.php');
 include_once('classes/xml.class.php');
 include_once('classes/jobs.class.php');
-include_once('classes/password.migration.class.php');
 
 //This registers the password migration functions 
-include_once('wpec_data_feeder_scheduler.php');
+include_once('classes/password.migration.class.php');
 new WPSC_EC_Password_Migrator();
 
-$ecom_plugin = WP_PLUGIN_DIR . '/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
-
-/* The activation hook is executed when the plugin is activated. */
-register_activation_hook(__FILE__,'wpec_data_feeder_activation');
-
-/* The deactivation hook is executed when the plugin is deactivated */
-register_deactivation_hook(__FILE__,'wpec_data_feeder_deactivation');
 
 /**
 * This is where we hook in our XML-RPC service,  got claim our xml methods
@@ -64,8 +56,6 @@ if (is_admin()){
 		add_action('admin_init','wpsc_data_feeder_init');		
 		return $page_hooks;
 	}
-	add_filter('wpsc_billing_details_top', 'show_pick_gen_link');
-	if(isset($_REQUEST['submit']) && $_REQUEST['submit'] == 'Export Data') add_action('init', 'exportData');
 }
 add_filter('wpsc_additional_pages', 'wpsc_add_data_feeder_page',10, 2);
 
@@ -78,22 +68,28 @@ function wpsc_data_feeder_init(){
 function wpec_data_feed_styles(){
 	wp_enqueue_style( 'ecomm_data');
 }
+
 function exportData(){
 	global $logger;
-	$logger->debug("Running Debug");
-	if(isset($_REQUEST['wpec_data_feeder'])){
-		$job = new WPEC_Jobs();
-		$result = $job->runJob($_REQUEST['wpec_data_feeder']);
+	switch($_REQUEST['submit']){
+		case 'Export Data':
+		case 'Run Now':
+			$logger->debug("Running Debug");
+			$job = new WPEC_Jobs();
+			$job->init();
+			if(isset($_REQUEST['wpec_data_feeder']) ) $result = $job->runJob($_REQUEST['wpec_data_feeder']);
+			break;
 	}
 }
-
-
+add_action('admin_menu', exportData);
+	
 function display_wpe_data_feeder(){
-	global $data_feed_page, $tab, $logger, $scheduledJobs;
+	global $data_feed_page, $tab, $logger, $scheduledJobs, $job;
 	//Trying out Smarty
 	$tab = isset($_REQUEST['wpec_data_feeder']['direction'])? $_REQUEST['wpec_data_feeder']['direction'] : 'import';
 	$result = false;
 	$job = new WPEC_Jobs();
+	$job->init();
 
 	$logger->debug("Running ".print_r($_REQUEST,true));
 	//load css
@@ -103,12 +99,12 @@ function display_wpe_data_feeder(){
 		include('views/tab.menu.php');
 		$scheduledJobs = $job->getScheudledJobs(array('direction'=>'import'));
 		$job->prepareImportForm($data);
-		$job->prepareScheudler($data);
 		include('views/import.php');
 	}else{
 		//This is were the business logic actually happens
 		if(isset($_REQUEST['submit'])){
 			switch($_REQUEST['submit']){
+				case 'Export Data':
 				case 'Run Now':
 					$logger->debug("Running Debug");
 					if(isset($_REQUEST['wpec_data_feeder']) ) $result = $job->runJob($_REQUEST['wpec_data_feeder']);
@@ -131,7 +127,6 @@ function display_wpe_data_feeder(){
 				case 'Edit':
 					if(isset($_REQUEST['id'])){
 						$data = $job->getScheudledJobs(array('id'=>$_REQUEST['id']));
-						$data = $data[0];
 					}
 					break;
 				default:
@@ -148,6 +143,8 @@ function display_wpe_data_feeder(){
 		include('views/tab.menu.php');
 		if(!isset($data) && isset($_REQUEST['wpec_data_feeder'])){
 			$data = $_REQUEST['wpec_data_feeder'];
+		}else if(isset($data)){
+			$_REQUEST['wpec_data_feeder'] = array_merge($_REQUEST['wpec_data_feeder'],$data);	
 		}else if(!isset($data)){
 			$data = '';
 		}
@@ -156,13 +153,11 @@ function display_wpe_data_feeder(){
 				//Get the list of already saved import jobs to show the user
 				$scheduledJobs = $job->getScheudledJobs(array('direction'=>$tab));
 				$job->prepareImportForm($data);
-				$job->prepareScheudler($data);
 				include('views/import.php');
 				break;
 			case 'export';
 				$scheduledJobs = $job->getScheudledJobs(array('direction'=>$tab));
 				$job->prepareExportForm($data);
-				$job->prepareScheudler($data);
 				include('views/export.php');
 				break;
 			case 'schedule';
@@ -171,13 +166,31 @@ function display_wpe_data_feeder(){
 				break;
 			default:
 				$job->prepareImportForm($data);
-				$job->prepareScheudler($data);
 				include('views/import.php');
 				break;
 		}
 	}
 }
 
+//Load the built in scripts
+function load_feeder_scripts(){
+	global $ecom_plugin;
+	//Register my XML script
+	include_once($ecom_plugin.'/classes/xmlJobs.class.php');
+	$xmlJob = new xmlJobs();
+	$xmlJob->init();
+
+	//Register my CSV script
+	include_once($ecom_plugin.'/classes/csvJobs.class.php');
+	$csvJob = new csvJobs();
+	$csvJob->init();
+
+	//Register my SQL script
+	include_once($ecom_plugin.'/classes/sqlJobs.class.php');
+	$sqlJob = new sqlJobs();
+	$sqlJob->init();
+}
+add_filter('wpsc_init', 'load_feeder_scripts');
 /**
 * This next section just loads the info for admin help context menus
 *

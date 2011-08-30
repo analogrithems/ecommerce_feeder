@@ -27,7 +27,8 @@ class WPEC_ecommerce_feeder{
 	var $filesUploaded;
 
 	public function __construct() {
-		$this->logger = Logger::getLogger(__CLASS__);
+                global $logger;
+                $this->logger = $logger;
 		if(isset($_SESSION['error_msg'])) unset($_SESSION['error_msg']);
 		$filesUploaded = array();
 	}
@@ -52,7 +53,7 @@ class WPEC_ecommerce_feeder{
 
 		if(isset($new['id']) || !empty($new['id']) ){
 			$id = $new['id'];
-			$cur = $wpdb->get_row("SELECT * FROM {$table} WHERE {$pkey}={$id}",ARRAY_A);
+			$cur = $wpdb->get_row("SELECT * FROM {$table} WHERE ".$wpdb->escape($pkey)."=".$wpdb->escape($id),ARRAY_A);
 		}
                 $format = array();
 		//We Should only mess with the columns that are in our table.
@@ -263,7 +264,7 @@ class WPEC_ecommerce_feeder{
 				}else {
 					$d1 = "'$value'";
 				}	
-				$sql = "SELECT COUNT({$col}) FROM {$table} WHERE {$col}={$d1}";
+				$sql = "SELECT COUNT({$col}) FROM {$table} WHERE ".$wpdb->escape($col)."=".$wpdb->escape($d1);
 				$result = $wpdb->get_var($sql);
 				$this->logger->info("isUnique: ".$sql.":".print_r($result,true));
 				if(is_null($result) || $result == 0) return true;
