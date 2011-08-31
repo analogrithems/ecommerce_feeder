@@ -18,19 +18,19 @@ Author URI: http://www.analogrithems.com
 global $logger, $ecom_plugin;
 define('ECOMMERCE_FEEDER', '20110701');
 $ecom_plugin = WP_PLUGIN_DIR . '/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
-//Implement a real debugging system
-require_once ($ecom_plugin.'classes/WP_Logger.class.php');
-$logger = new WP_Logger($ecom_plugin.'/ecommerce_feeder.log');
 
 
 include_once('classes/WPEC_ecommerce_feeder.class.php');
 include_once('classes/xml.class.php');
 include_once('classes/jobs.class.php');
 
+//Implement a real debugging system
+require_once ($ecom_plugin.'classes/WP_Logger.class.php');
+$logger = new WP_Logger($ecom_plugin.'/ecommerce_feeder.log');
+
 //This registers the password migration functions 
 include_once('classes/password.migration.class.php');
 new WPSC_EC_Password_Migrator();
-
 
 /**
 * This is where we hook in our XML-RPC service,  got claim our xml methods
@@ -104,7 +104,6 @@ function display_wpe_data_feeder(){
 		//This is were the business logic actually happens
 		if(isset($_REQUEST['submit'])){
 			switch($_REQUEST['submit']){
-				case 'Export Data':
 				case 'Run Now':
 					$logger->debug("Running Debug");
 					if(isset($_REQUEST['wpec_data_feeder']) ) $result = $job->runJob($_REQUEST['wpec_data_feeder']);
