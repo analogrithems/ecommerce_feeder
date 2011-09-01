@@ -398,7 +398,6 @@ class WPEC_ecommerce_feeder{
                         $new_filename = preg_replace("/[^a-z0-9\.\_]/i",'_', basename($url));
                         $new_filepath = sys_get_temp_dir(). "/" . $new_filename;
                         set_time_limit(0);
-                        ini_set('display_errors',true);//Just in case we get some errors, let us know....
                         $fp = fopen ($new_filepath, 'w+');//This is the file where we save the information
                         $ch = curl_init(str_replace(' ', '%20', $url));//Here is the file we are downloading
                         curl_setopt($ch, CURLOPT_TIMEOUT, 50);

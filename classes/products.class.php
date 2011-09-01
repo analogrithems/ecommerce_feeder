@@ -47,7 +47,8 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 			if($this->isGood($row)){
 				//search products by style, don't waste time with name as it can be to hard to keep exact match
 				$this->logger->info("Row #{$r}");
-				$product = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'style', 'meta_value'=>$row['style'] ) );
+				if($this->isGood($row['style'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'style', 'meta_value'=>$row['style'] ) );
+				elseif($this->isGood($row['name'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'post_title'=>$row['name']));
 
 				//Meta the meta info ready
 				$row['meta']['_wpsc_price'] = abs((float)str_replace( ',','',$this->isGood($row['price']) ? $row['price'] : '' ));
@@ -213,6 +214,7 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 	*  It returns the term_id of the given term
 	*/
 	function getVariant($term, $taxonomy, $parent_id = null){
+		$this->logger->debug("Checking {$taxonomy} for term:".print_r($term,1)." parent:".print_r($parent_id,1));
 		if(($_term = term_exists($term, $taxonomy, $parent_id)) == 0){
 			//Parent Doesn't Exsits, add it
 			$slug = preg_replace('/[\`\~\!\@\#\$\%\^\*\(\)\; \,\.\'\/\-]/i','_',$term);
@@ -220,9 +222,12 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 			$newTerm = wp_insert_term( $term, $taxonomy, array('slug'=>$slug, 'parent'=>$parent_id));
 			return $newTerm['term_id'];
 		}else{
+			$this->logger->debug("Found it as:".print_r($_term,1));
 			return $_term['term_id'];
 		}
 	}
+
+
 	function data_feed_import($type = null){
 		global $wpdb;
 		if($this->isGood($type)){
@@ -433,6 +438,20 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				$time = $post->post_date;
 		}
 
+		if(isset($post_id) && $post_id>0){
+			$currentImages = array();
+			$currentImages = $this->getProductImages($post_id);
+			$img = basename($url);
+			foreach($currentImages as $imageRec){
+				$this->logger->info("Compairing :".print_r(basename($imageRec->guid),1)."==".print_r($img,1));
+				if(basename($imageRec->guid) == $img){
+					//img already exists, assume this is update and delete the other one first
+					$this->logger->info("Deleteing previous image");
+					wp_delete_attachment($imageRec->ID,1);
+				}
+			}
+		}
+
 		$file = ($this->isGood($this->filesUploaded[$url])) ? $this->filesUploaded[$url] : wp_handle_sideload($this->getFile($url), array('test_form'=>false, 'test_upload'=>false), $time);
 		$this->filesUploaded[$url] = array_merge($this->filesUploaded[$url],$file);
 		$name = $this->filesUploaded[$url]['name'];
@@ -446,6 +465,7 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		$url = $file['url'];
 		$type = $file['type'];
 		$file = $file['file'];
+		$this->logger->info("Curent file path:{$file}");
 		$title = $name;
 		$content = '';
 
@@ -600,10 +620,10 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 	* @return mixed
 	*/
 	function getProductImages($productID){
+		$this->logger->info("Looking up curent images for:".$productID);
 		$images = get_children(array(
-			'post_parent' => get_the_ID(),
+			'post_parent' => $productID,
 			'post_type' => 'attachment',
-			'numberposts' => 1,
 			'post_mime_type' => 'image',)
 		);
 		return $images;

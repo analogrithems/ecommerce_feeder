@@ -51,7 +51,7 @@ if (is_admin()){
 		global $logger;
 		global $data_feed_page;
 		$logger->debug("Init arguments:".print_r($page_hooks,true).':'.print_r($base_page,true));
-		$data_feed_page =add_submenu_page($base_page,__('-Data Feed','wpsc'), __('-Data Feeds','wpsc'), 'manage_options', 'wpsc_module_data_feeder','display_wpe_data_feeder');	
+		$data_feed_page =add_submenu_page('tools.php',__('eCommerce Feeder','wpsc'), __('eCommerce Feeder','wpsc'), 'manage_options', 'wpsc_module_data_feeder','display_wpe_data_feeder');	
 		$page_hooks[] =	$data_feed_page;
 		add_action('admin_init','wpsc_data_feeder_init');		
 		return $page_hooks;
@@ -71,14 +71,16 @@ function wpec_data_feed_styles(){
 
 function exportData(){
 	global $logger;
-	switch($_REQUEST['submit']){
-		case 'Export Data':
-		case 'Run Now':
-			$logger->debug("Running Debug");
-			$job = new WPEC_Jobs();
-			$job->init();
-			if(isset($_REQUEST['wpec_data_feeder']) ) $result = $job->runJob($_REQUEST['wpec_data_feeder']);
-			break;
+	if(isset($_REQUEST['wpec_data_feeder'])){
+		switch($_REQUEST['submit']){
+			case 'Export Data':
+				$job = new WPEC_Jobs();
+				$job->init();
+				if(isset($_REQUEST['wpec_data_feeder']) ) $result = $job->runJob($_REQUEST['wpec_data_feeder']);
+				break;
+			default:
+				break;
+		}
 	}
 }
 add_action('admin_menu', exportData);
@@ -111,11 +113,6 @@ function display_wpe_data_feeder(){
 				case 'Save Job':
 					if(isset($_REQUEST['wpec_data_feeder'])){
 						$result = $job->saveJob($_REQUEST['wpec_data_feeder']);
-					}
-					break;
-				case 'Export':
-					if(isset($_REQUEST['wpec_data_feeder'])){
-						 $result = $job->exportJob($_REQUEST['wpec_data_feeder']);
 					}
 					break;
 				case 'Delete':

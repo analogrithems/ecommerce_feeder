@@ -7,6 +7,7 @@ class csvJobs extends WPEC_Jobs{
 	function init(){
                 add_filter('ecommerce_feeder_import_form', array($this, 'importForm'));
                 add_filter('ecommerce_feeder_export_form', array($this, 'exportForm'));
+		add_filter('ecommerce_feeder_validateJob_'.$this->script, array($this, 'validate'));
 		add_action('ecommerce_feeder_run_import_'.$this->script, array($this, 'import'),10,2);
 		add_action('ecommerce_feeder_run_export_'.$this->script, array($this, 'export'),10,2);
 		add_filter('ecommerce_feeder_register_script', array($this, 'registerScript'));
@@ -23,6 +24,14 @@ class csvJobs extends WPEC_Jobs{
 			$scripts['export'][$this->script] = array('CSV'=>array('users','products','orders'));
 			return $scripts;
 		}
+	}
+
+	function validate($data){
+		if(!$this->isGood($data['source_csv'])){
+			$this->setError("Must Give A URL to Download CSV From!");
+			return false;
+		}
+		return true;
 	}
 
 

@@ -7,6 +7,7 @@ class xmlJobs extends WPEC_Jobs{
 	function init(){
 		add_filter('ecommerce_feeder_import_form', array($this, 'importForm'));
 		add_filter('ecommerce_feeder_export_form', array($this, 'exportForm'));
+		add_filter('ecommerce_feeder_validateJob_'.$this->script, array($this, 'validate'));
 		add_filter('ecommerce_feeder_register_script', array($this, 'registerScript'));
 		add_action('ecommerce_feeder_run_import_'.$this->script, array($this, 'import'),10,2);
 		add_action('ecommerce_feeder_run_export_'.$this->script, array($this, 'export'),10,2);
@@ -25,6 +26,13 @@ class xmlJobs extends WPEC_Jobs{
 		}
 	}
 
+        function validate($data){
+                if(!$this->isGood($data['source_xml'])){
+                        $this->setError("Must Give A URL to Download XML From!");
+                        return false;
+                }
+                return true;
+        }
 
 	function importForm($preset=false){
 		if(is_array($presets) && !$presets) extract($presets);
@@ -73,7 +81,7 @@ class xmlJobs extends WPEC_Jobs{
 	}
 
         function export($data_type=false,$dataSets=false){
-                //get csv into array
+                //get xml into array
                 if($dataSets){
 			include_once('xml.class.php');
 			$xml = new EF_XML_Helper();

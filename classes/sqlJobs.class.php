@@ -6,6 +6,7 @@ class sqlJobs extends WPEC_Jobs{
 
 	function init(){
                 add_filter('ecommerce_feeder_import_form', array($this, 'importForm'));
+                add_filter('ecommerce_feeder_validateJob_'.$this->script, array($this, 'validate'));
 		add_action('ecommerce_feeder_run_import_'.$this->script, array($this, 'import'),10,2);
 		add_filter('ecommerce_feeder_register_script', array($this, 'registerScript'));
 	}
@@ -22,6 +23,38 @@ class sqlJobs extends WPEC_Jobs{
 			return $scripts;
 		}
 	}
+
+        function validate($data){
+                if(!isset($data['baseURL'])){
+                        $this->setError(__("Must have base URL for image import!, If image import is not needed set it to anything.",'oscom_import'));
+                        return false;
+                }
+                if(!$this->isGood($data['db_driver'])){
+                        $this->setError(__("You Must Select a Database Driver!",'oscom_import'));
+                        return false;
+                }
+                if(!$this->isGood($data['dbhost'])){
+                        $this->setError(__("You Must Specify the Database Server!",'oscom_import'));
+                        return false;
+                }
+                if(!$this->isGood($data['dbuser'])){
+                        $this->setError(__("You Must Specify the Database User to Connect As!",'oscom_import'));
+                        return false;
+                }
+                if(!$this->isGood($data['dbpassword'])){
+                        $this->setError(__("You Must Specify the Database Password to Connect With!",'oscom_import'));
+                        return false;
+                }
+                if(!$this->isGood($data['dbname'])){
+                        $this->setError(__("You Must Specify The Database to Connect to!",'oscom_import'));
+                        return false;
+                }
+                if(!$this->isGood($data['source_sql'])){
+                        $this->setError(__("What am I supposed to do with this?  Give me a SQL Query!",'oscom_import'));
+                        return false;
+                }
+                return true;
+        }
 
 
 	function importForm($presets=false){

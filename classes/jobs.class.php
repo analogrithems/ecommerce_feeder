@@ -59,10 +59,15 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 		$_SESSION['status_msg'] = __("You're Job Was Saved",'ecommerce_feeder');
 	}
 
+	function validateJob($data=false){
+		return true;
+	}
+
 	/**
 	 * saveJob([mixed $data = false])
 	 *
 	 * The call to save the submitted data.  If no array is passed it will try to grab it from the _REQUEST
+	 * It will validate the data against the scripts hooks
 	 *
 	 * @param mixed $data
 	 * @return boolean
@@ -77,66 +82,8 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 			}
 		}
 		if(!$this->isGood($data['direction']) && $_REQUEST['direction']) $data['direction'] = $_REQUEST['direction'];
-		switch($data['type']){
-			case 'sqlJobs':
-				if(!$this->isGood($data['name']) ){
-					$this->setError("Whatever name you give this job must be unique!");
-					$valid=false;
-				}
-				if(!$this->isGood($data['db_driver'])){
-					$this->setError("You Must Select a Database Driver!");
-					$valid=false;
-				}
-				if(!$this->isGood($data['dbhost'])){
-					$this->setError("You Must Specify the Database Server!");
-					$valid=false;
-				}
-				if(!$this->isGood($data['dbuser'])){
-					$this->setError("You Must Specify the Database User to Connect As!");
-					$valid=false;
-				}
-				if(!$this->isGood($data['dbpassword'])){
-					$this->setError("You Must Specify the Database Password to Connect With!");
-					$valid=false;
-				}
-				if(!$this->isGood($data['dbname'])){
-					$this->setError("You Must Specify The Database to Connect to!");
-					$valid=false;
-				}
-				if(!$this->isGood($data['source_sql'])){
-					$this->setError("What am I supposed to do with this?  Give me a SQL Query!");
-					$valid=false;
-				}
-				$this->logger->debug(print_r($data,true));
-				if($valid){
-					$this->runSave($data);
-					return true;
-				}else{
-					return false;
-				}
-
-				break;
-			case 'xmlJobs':
-				if(!$this->isGood($data['source_xml'])){
-					$this->setError("Must Give A URL to Download XML From!");
-					return false;
-				}
-				$this->runSave($data);
-				return true;
-				break;
-			case 'csvJobs':
-				if(!$this->isGood($data['source_csv'])){
-					$this->setError("Must Give A URL to Download CSV From!");
-					return false;
-				}
-				$this->runSave($data);
-				return true;
-				break;
-			default:
-				$this->setError("You Must Choose A Source!");
-				return false;
-		}
-
+		$valid = apply_filters('ecommerce_feeder_validateJob_'.$data['type'],$data);
+		if($valid) $this->runSave($data);
 	}
 
 	/**
