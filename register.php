@@ -28,10 +28,6 @@ include_once('classes/jobs.class.php');
 require_once ($ecom_plugin.'classes/WP_Logger.class.php');
 $logger = new WP_Logger($ecom_plugin.'/ecommerce_feeder.log');
 
-//This registers the password migration functions 
-include_once('classes/password.migration.class.php');
-new WPSC_EC_Password_Migrator();
-
 /**
 * This is where we hook in our XML-RPC service,  got claim our xml methods
 */

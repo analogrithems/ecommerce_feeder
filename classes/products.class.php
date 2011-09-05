@@ -52,8 +52,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 
 				//Meta the meta info ready
 				$row['meta']['_wpsc_price'] = abs((float)str_replace( ',','',$this->isGood($row['price']) ? $row['price'] : '' ));
-				$row['meta']['_wpsc_special_price'] = abs((float)str_replace( ',','',$this->isGood($row['special_price']) ? $row['special_price'] : '' ));
-				$row['meta']['_wpsc_sku'] = $this->isGood($row['style']) ? $row['style'] : '';
 
 				$row['meta']['_wpsc_product_metadata']['display_weight_as'] = 'pound';
 				$row['meta']['_wpsc_product_metadata']['weight_unit'] = 'pound';
@@ -108,7 +106,10 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 					//if the product is no longer active, unpublish it.
 					if($this->isGood($row['active']) && $row['active'] == 0 ) wpsc_set_publish_status($row['product_id'], 'draft');
 					if($this->isGood($row['image'])){
-						$image_id = $this->image_handle_upload($row['image'],$row['product_id']);
+						$images = explode(' | ', $row['image']);
+						foreach($images as $image){
+							$image_id = $this->image_handle_upload($image,$row['product_id']);
+						}
 					}
 					$result = $this->updateVariant($row['product_id'], $row);
 					$variantUpdates++;
@@ -124,7 +125,10 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 						$row['tax_input']['wpsc_product_category'][] = $term_id;
 					}
 					if($this->isGood($row['image'])){
-						$image_id = $this->image_handle_upload($row['image'],$product_id);
+						$images = explode(' | ', $row['image']);
+						foreach($images as $image){
+							$image_id = $this->image_handle_upload($image,$row['product_id']);
+						}
 					}
 					$result = $this->updateVariant($product_id,$row);
 				}
@@ -136,6 +140,15 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				}
 				//This sets the category, if category doesn't exists it makes it.
 				if($this->isGood($row['category'])){
+					$categoryPath = explode('->',$row['category']);
+					if(count($categoryPath) >1){
+						$last = end($categoryPath);
+						$pid = 0;
+						foreach($categoryPath as $cat){
+							$pid = $this->getVariant($cat,'wpsc-variation',$pid);
+						}
+						$row['category'] = $last;
+					}
 					wp_set_object_terms($product_id,$row['category'],'wpsc_product_category');
 				}
 				//Update the Meta
