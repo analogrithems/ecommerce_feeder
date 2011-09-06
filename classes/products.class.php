@@ -120,10 +120,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 					$row['new_custom_meta']['value'][] = $row['style'];
 					$product_id = wpsc_insert_product($row);
 					$productUpdates++;
-					if($this->isGood($row['category'])){
-						$term_id = $this->getVariant($row['category'],'wpsc_product_category');
-						$row['tax_input']['wpsc_product_category'][] = $term_id;
-					}
 					if($this->isGood($row['image'])){
 						$images = explode(' | ', $row['image']);
 						foreach($images as $image){
@@ -141,14 +137,16 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				//This sets the category, if category doesn't exists it makes it.
 				if($this->isGood($row['category'])){
 					$categoryPath = explode('->',$row['category']);
-					if(count($categoryPath) >1){
-						$last = end($categoryPath);
-						$pid = 0;
-						foreach($categoryPath as $cat){
-							$pid = $this->getVariant($cat,'wpsc-variation',$pid);
+					if(count($categoryPath) > 1){
+						$pid = $this->getVariant($categoryPath[0],'wpsc_product_category');
+						for($i=1;count($categoryPath) > $i;$i++){
+							$pid = $this->getVariant($categoryPath[$i],'wpsc_product_category',$pid);
 						}
-						$row['category'] = $last;
+						$row['category'] = (int)$pid;
+					}else{
+						$row['category'] = (int)$this->getVariant($categoryPath[0],'wpsc_product_category');
 					}
+					$this->logger->info("Adding {$row['category']} to productid {$product_id}");
 					wp_set_object_terms($product_id,$row['category'],'wpsc_product_category');
 				}
 				//Update the Meta
@@ -231,11 +229,11 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		if(($_term = term_exists($term, $taxonomy, $parent_id)) == 0){
 			//Parent Doesn't Exsits, add it
 			$slug = preg_replace('/[\`\~\!\@\#\$\%\^\*\(\)\; \,\.\'\/\-]/i','_',$term);
-			$this->logger->debug("Adding New Term".print_r($term,true));
+			$this->logger->debug("Adding New Term: {$term} for Taxonomy: {$taxonomy} with Parent:{$parent_id}");
 			$newTerm = wp_insert_term( $term, $taxonomy, array('slug'=>$slug, 'parent'=>$parent_id));
 			return $newTerm['term_id'];
 		}else{
-			$this->logger->debug("Found it as:".print_r($_term,1));
+			$this->logger->debug("Found it as: ".print_r($_term,1));
 			return $_term['term_id'];
 		}
 	}
