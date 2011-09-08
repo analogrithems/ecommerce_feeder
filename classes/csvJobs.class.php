@@ -20,8 +20,8 @@ class csvJobs extends WPEC_Jobs{
 		}else{
 			//Which data will support?  
 			//Users, Products, Orders
-			$scripts['import'][$this->script] = array('CSV'=>array('users','products','orders'));
-			$scripts['export'][$this->script] = array('CSV'=>array('users','products','orders'));
+			$scripts['import'][$this->script] = array('name'=>'CSV', 'options'=>array('customers'=>'Customer Accounts', 'products'=>'Products','orders'=>'Order History'));
+			$scripts['export'][$this->script] = array('name'=>'CSV', 'options'=>array('customers'=>'Customer Accounts', 'products'=>'Products','orders'=>'Order History'));
 			return $scripts;
 		}
 	}

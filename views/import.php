@@ -30,24 +30,36 @@ global $objects, $types, $schedules, $db_drivers, $job;
 				<div class="inside">
 					<script>
 						jQuery(document).ready( function() {
-						   var activeScripts = new Array();
 							<?php
+								echo "var scriptOptions = ".json_encode($job->scripts['import']).";\n";
 								//load all the active scripts
-								$scripts = array('none'=>__('Select Script','ecommerce_feeder'));
-								$i = 0;
-								foreach($job->scripts['import'] as $script=>$options){
-									$tmp = array_keys($options);
-									$scripts[$script] = $tmp[0];
-									echo "activeScripts[{$i}] = '".$script."';\n";
-									$i++;
+								if($selectedScript = fromRequest('type')){
+									echo "var selScript = '".$selectedScript."';\n";
 								}
+								if($selectedPurpose = fromRequest('object')){
+									echo "var selPurp = '".$selectedPurpose."';\n";
+								}
+								
+
 							?>
-						   selected = jQuery('#wpec_data_feeder_type').children("option:selected").val();
+						   var options = '';
 						   jQuery('#scriptsForm div span :input').attr('disabled', true);
 						   jQuery('.hideonstart').hide();
-						   if(selected != 'none'){
-							jQuery('#'+selected).show();
-							jQuery('#'+selected+' span :input').attr('disabled', false);
+						   for(var key in scriptOptions){
+							options = options+"<option value='"+key+"'>"+scriptOptions[key].name+"</option>";
+						   }
+
+						   jQuery('select#wpec_data_feeder_type').html(options);
+						   selected = jQuery('#wpec_data_feeder_type').children("option:selected").val();
+						   getScriptOptions(selected);
+						   if(typeof(selScript) !== 'undefined'){ 
+							jQuery('select#wpec_data_feeder_type').val(selScript);
+							getScriptOptions(selScript);
+							jQuery('#'+selScript).show();
+							jQuery('#'+selScript+' span :input').attr('disabled', false);
+						   }
+						   if(typeof(selPurp) !== 'undefined'){
+							jQuery('#wpec_data_feeder_object').val(selPurp);
 						   }
 
 						   jQuery('#wpec_data_feeder_type').change(function() {
@@ -56,7 +68,19 @@ global $objects, $types, $schedules, $db_drivers, $job;
 							shown = jQuery(this).children("option:selected").val();
 							jQuery('#'+shown).show();
 							jQuery('#'+shown+' span :input').attr('disabled', false);
+							var options = getScriptOptions(shown);
+							//jQuery('select#'+wpec_data_feeder_object).html(options);
 						   });
+
+						   function getScriptOptions(sel){
+							var slist = scriptOptions[sel];
+							var options = '';
+							for(var key in slist.options){
+								options = options+"<option value='"+key+"'>"+slist.options[key]+"</option>";
+							}
+							jQuery('select#wpec_data_feeder_object').html(options);
+						   }
+							
 						});
 					</script>
 					<table class="form-table">
@@ -67,15 +91,13 @@ global $objects, $types, $schedules, $db_drivers, $job;
 						<tr valign="top">
 							<th scope="row">Choose a Source</th>
 							<td><select id='wpec_data_feeder_type' name='wpec_data_feeder[type]'>
-								<?php echo htmlOptions($scripts, fromRequest('type')); ?>
 							    </select>
 							</td>
 						</tr>
 						<tr valign="top">
 							<th scope="row">Select a Purpose</th>
 							<td>
-							    <select name='wpec_data_feeder[object]'>
-								<?php echo htmlOptions($objects, fromRequest('object')); ?>
+							    <select id='wpec_data_feeder_object' name='wpec_data_feeder[object]'>
 							    </select>
 							</td>
 						</tr>

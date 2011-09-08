@@ -19,7 +19,7 @@ class sqlJobs extends WPEC_Jobs{
 		}else{
 			//Which data will support?  
 			//Users, Products, Orders
-			$scripts['import'][$this->script] = array('SQL'=>array('users','products','orders'));
+			$scripts['import'][$this->script] = array('name'=>'SQL', 'options'=>array('customers'=>'Customer Accounts', 'products'=>'Products','orders'=>'Order History'));
 			return $scripts;
 		}
 	}

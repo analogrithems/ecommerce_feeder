@@ -20,8 +20,8 @@ class xmlJobs extends WPEC_Jobs{
 		}else{
 			//Which data will support?  
 			//Users, Products, Orders
-			$scripts['import'][$this->script] = array('XML'=>array('users','products','orders'));
-			$scripts['export'][$this->script] = array('XML'=>array('users','products','orders'));
+			$scripts['import'][$this->script] = array('name'=>'XML', 'options'=>array('customers'=>'Customer Accounts', 'products'=>'Products','orders'=>'Order History'));
+			$scripts['export'][$this->script] = array('name'=>'XML', 'options'=>array('customers'=>'Customer Accounts', 'products'=>'Products','orders'=>'Order History'));
 			return $scripts;
 		}
 	}

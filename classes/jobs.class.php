@@ -28,8 +28,6 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	
 	function __construct(){
                 global $wpdb;
-                define('WPEC_ECOMM_FEEDER', $wpdb->prefix.'data_feeder');
-                $this->mydb = WPEC_ECOMM_FEEDER;
 		parent::__construct();
 	}
 

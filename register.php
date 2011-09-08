@@ -79,7 +79,7 @@ function exportData(){
 		}
 	}
 }
-add_action('admin_menu', exportData);
+add_action('admin_menu', 'exportData');
 	
 function display_wpe_data_feeder(){
 	global $data_feed_page, $tab, $logger, $scheduledJobs, $job;
