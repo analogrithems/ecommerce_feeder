@@ -267,7 +267,7 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 				include_once('products.class.php');
 				$products = new WPEC_Products();
 				$dataSets = $products->exportProducts();
-				$this->logger->info("Trying to export products:".print_r($dataSet,true));
+				//$this->logger->info("Trying to export products:".print_r($dataSets,true));
 				break;
 			default:
 				$this->logger->error("Failed to Run Job, incorrect object.:".print_r($instructions,true));

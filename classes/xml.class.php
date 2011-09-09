@@ -34,8 +34,6 @@ class EF_XML_Helper extends WPEC_ecommerce_feeder{
 	    if ( ini_get('zend.ze1_compatibility_mode') == 1 ) ini_set ( 'zend.ze1_compatibility_mode', 0 );
 	    if ( is_null( $xml ) ){ 	
 		$xml = simplexml_load_string("<?xml version='1.0' encoding='utf-8'?><$rootNodeName />");
-
-		$this->logger->info("XML:".print_r($xml,true));
 	    }
 	    // loop through the data passed in.
 	    foreach( $data as $key => $value ) {
@@ -43,7 +41,7 @@ class EF_XML_Helper extends WPEC_ecommerce_feeder{
 		// no numeric keys in our xml please!
 		if ( is_numeric( $key ) ) {
 		    $numeric = 1;
-		    $key = $rootNodeName;
+		    $key = substr($rootNodeName, 0,-1);
 		}
 
 		// delete any char not allowed in XML element names
@@ -95,14 +93,14 @@ class EF_XML_Helper extends WPEC_ecommerce_feeder{
 	    }
 
 	    // pass back as XML
-	    return $xml->asXML();
+	    //return $xml->asXML();
 
 		// if you want the XML to be formatted, use the below instead to return the XML
-		//$doc = new DOMDocument('1.0');
-		//$doc->preserveWhiteSpace = false;
-		//$doc->loadXML( $xml->asXML() );
-		//$doc->formatOutput = true;
-		//return $doc->saveXML();
+		$doc = new DOMDocument('1.0');
+		$doc->preserveWhiteSpace = false;
+		$doc->loadXML( $xml->asXML() );
+		$doc->formatOutput = true;
+		return $doc->saveXML();
 	}
 
 

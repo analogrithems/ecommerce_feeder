@@ -519,106 +519,93 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		set_time_limit(0); 
 		$order = 'ASC';
 		if($options) extract($options);
-		$counts = wp_count_posts( $this->post_type );
-		$post_per_page = $counts->publish + $counts->future + $counts->draft + $counts->pending + $counts->private + $counts->inherit;
 
-		$products = new WP_Query(array( 
-			'post_type'=>$this->post_type,
-			'posts_per_page'=>$post_per_page,
-			'public'=>false,
-			'order'=>$order
-		));
-
+		$sql = "SELECT ID, post_content, post_title, guid from {$wpdb->posts} WHERE post_type='wpsc-product' AND post_status in ('publish', 'draft','pending')";
 		//Loop Through all the 
-		if($products->have_posts()){
-			while( $products->have_posts() ){
-				$products->the_post();
-				$post = $products->post;
-				if($variants =& get_children(array('post_parent'=>$post->ID, 'post_type'=>'wpsc-product','order'=> "ASC"))){
-					foreach($variants as $variant){
-						$id = $variant->ID;
+		foreach($wpdb->get_results($sql,OBJECT_K) as $post){
+			if($variants =& get_children(array('post_parent'=>$post->ID, 'post_type'=>'wpsc-product','order'=> "ASC"))){
+				foreach($variants as $variant){
+					$id = $variant->ID;
 
-						$name = $variant->post_title;
-						$description = $variant->post_content;
+					$name = $variant->post_title;
+					$description = $variant->post_content;
 
-						$prod_tmp[$id]['name'] = $name;
-						$prod_tmp[$id]['description']=$description;
-						$prod_tmp[$id]['price'] = get_post_meta($id, '_wpsc_price', true );
-						$prod_tmp[$id]['special_price'] = get_post_meta($id, '_wpsc_special_price', true );
-						$prod_tmp[$id]['sku'] = get_post_meta($id, '_wpsc_sku', true );
-						$prod_tmp[$id]['upc'] = $prod_tmp[$id]['sku'];
-						$prod_tmp[$id]['image'] = wpsc_the_product_image(false,false,$id);
-						$prod_meta = get_post_meta($id, '_wpsc_product_metadata');
-						if(isset($prod_meta['weight'])){
-							$prod_tmp[$id]['weight'] = $prod_meta['weight'].$prod_meta['weight_unit'];
-						}else{
-							$prod_tmp[$id]['weight'] = 0;
-						}
-						$quantity = get_post_meta($id, '_wpsc_stock', true);
-						if(!empty($quantity)) $prod_tmp[$id]['quantity'] = $quantity;
-				
-						//Pack the custom meta
-						foreach(get_post_custom_keys($id) as $cmeta){
-							if(preg_match('/^_wpsc_/',$cmeta) == 1) continue;
-							$prod_tmp[$id]['meta_'.$cmeta] = get_post_meta($id,$cmeta,true);
-						}
-
-						//Pack the product Tags
-						//TODO look for product_tag taxonomy
-						$productTags = wp_get_object_terms( $post->ID, 'product_tag', array( 'fields' => 'names' ) );
-						if($productTags) {
-							$prod_tmp[$id]['tags'] = implode('|', $productTags);
-						}
-
-						//Get Variant info
-						$variantTaxonomies = wp_get_object_terms($id,'wpsc-variation');
-						foreach($variantTaxonomies as $tvar){
-							if($tvar->parent > 0){
-								$parent = get_term($tvar->parent,'wpsc-variation');
-								$key = $parent->name;
-							}else{
-								$key = $tvar->name;
-							}
-							$prod_tmp[$id]['variant_'.$key] = $tvar->name;
-						}
-							
-					}
-				}else{
-					if(isset($post->post_title)) $prod_tmp[$post->ID]['name'] = $post->post_title;
-					if(isset($post->post_content)) $prod_tmp[$post->ID]['description'] = $post->post_content;
-					if(isset($post->post_status) && $post->post_status == 'publish') $prod_tmp[$post->ID]['active'] = true;
-					else $prod_tmp[$post->ID]['active'] = false;
-				
-					//get the price
-					$prod_tmp[$post->ID]['price'] = get_post_meta($post->ID, '_wpsc_price', true );
-					$prod_tmp[$post->ID]['special_price'] = get_post_meta($post->ID, '_wpsc_special_price', true );
-					$prod_tmp[$post->ID]['sku'] = get_post_meta($post->ID, '_wpsc_sku', true );
-					$prod_tmp[$post->ID]['upc'] = $prod_tmp[$post->ID]['sku'];
-					$prod_tmp[$post->ID]['image'] = wpsc_the_product_image(false,false,$post->ID);
-					$prod_meta = get_post_meta($post->ID, '_wpsc_product_metadata');
+					$prod_tmp[$id]['name'] = $name;
+					$prod_tmp[$id]['description']=$description;
+					$prod_tmp[$id]['price'] = get_post_meta($id, '_wpsc_price', true );
+					$prod_tmp[$id]['special_price'] = get_post_meta($id, '_wpsc_special_price', true );
+					$prod_tmp[$id]['sku'] = get_post_meta($id, '_wpsc_sku', true );
+					$prod_tmp[$id]['upc'] = $prod_tmp[$id]['sku'];
+					$prod_tmp[$id]['image'] = wpsc_the_product_image(false,false,$id);
+					$prod_meta = get_post_meta($id, '_wpsc_product_metadata');
 					if(isset($prod_meta['weight'])){
-						$prod_tmp[$post->ID]['weight'] = $prod_meta['weight'].$prod_meta['weight_unit'];
+						$prod_tmp[$id]['weight'] = $prod_meta['weight'].$prod_meta['weight_unit'];
 					}else{
-						$prod_tmp[$post->ID]['weight'] = 0;
+						$prod_tmp[$id]['weight'] = 0;
 					}
-					
-					$quantity = get_post_meta($post->ID, '_wpsc_stock', true);
-					if(!empty($quantity)) $prod_tmp[$post->ID]['quantity'] = $quantity;
-					//Custom Meta
-					foreach(get_post_custom_keys($post->ID) as $cmeta){
+					$quantity = get_post_meta($id, '_wpsc_stock', true);
+					if(!empty($quantity)) $prod_tmp[$id]['quantity'] = $quantity;
+			
+					//Pack the custom meta
+					foreach(get_post_custom_keys($id) as $cmeta){
 						if(preg_match('/^_wpsc_/',$cmeta) == 1) continue;
-						$prod_tmp[$post->ID]['meta_'.$cmeta] = get_post_meta($post->ID,$cmeta,true);
+						$prod_tmp[$id]['meta_'.$cmeta] = get_post_meta($id,$cmeta,true);
 					}
 
 					//Pack the product Tags
+					//TODO look for product_tag taxonomy
 					$productTags = wp_get_object_terms( $post->ID, 'product_tag', array( 'fields' => 'names' ) );
 					if($productTags) {
 						$prod_tmp[$id]['tags'] = implode('|', $productTags);
 					}
+
+					//Get Variant info
+					$variantTaxonomies = wp_get_object_terms($id,'wpsc-variation');
+					foreach($variantTaxonomies as $tvar){
+						if($tvar->parent > 0){
+							$parent = get_term($tvar->parent,'wpsc-variation');
+							$key = $parent->name;
+						}else{
+							$key = $tvar->name;
+						}
+						$prod_tmp[$id]['variant_'.$key] = $tvar->name;
+					}
+						
+				}
+			}else{
+				if(isset($post->post_title)) $prod_tmp[$post->ID]['name'] = $post->post_title;
+				if(isset($post->post_content)) $prod_tmp[$post->ID]['description'] = $post->post_content;
+				if(isset($post->post_status) && $post->post_status == 'publish') $prod_tmp[$post->ID]['active'] = true;
+				else $prod_tmp[$post->ID]['active'] = false;
+			
+				//get the price
+				$prod_tmp[$post->ID]['price'] = get_post_meta($post->ID, '_wpsc_price', true );
+				$prod_tmp[$post->ID]['special_price'] = get_post_meta($post->ID, '_wpsc_special_price', true );
+				$prod_tmp[$post->ID]['sku'] = get_post_meta($post->ID, '_wpsc_sku', true );
+				$prod_tmp[$post->ID]['upc'] = $prod_tmp[$post->ID]['sku'];
+				$prod_tmp[$post->ID]['image'] = wpsc_the_product_image(false,false,$post->ID);
+				$prod_meta = get_post_meta($post->ID, '_wpsc_product_metadata');
+				if(isset($prod_meta['weight'])){
+					$prod_tmp[$post->ID]['weight'] = $prod_meta['weight'].$prod_meta['weight_unit'];
+				}else{
+					$prod_tmp[$post->ID]['weight'] = 0;
+				}
+				
+				$quantity = get_post_meta($post->ID, '_wpsc_stock', true);
+				if(!empty($quantity)) $prod_tmp[$post->ID]['quantity'] = $quantity;
+				//Custom Meta
+				foreach(get_post_custom_keys($post->ID) as $cmeta){
+					if(preg_match('/^_wpsc_/',$cmeta) == 1) continue;
+					$prod_tmp[$post->ID]['meta_'.$cmeta] = get_post_meta($post->ID,$cmeta,true);
+				}
+
+				//Pack the product Tags
+				$productTags = wp_get_object_terms( $post->ID, 'product_tag', array( 'fields' => 'names' ) );
+				if($productTags) {
+					$prod_tmp[$id]['tags'] = implode('|', $productTags);
 				}
 			}
 		}
-		
 	
 		wp_reset_postdata();
 		return($prod_tmp);
