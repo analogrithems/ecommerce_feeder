@@ -454,10 +454,8 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 			$currentImages = $this->getProductImages($post_id);
 			$img = basename($url);
 			foreach($currentImages as $imageRec){
-				$this->logger->info("Compairing :".print_r(basename($imageRec->guid),1)."==".print_r($img,1));
 				if(basename($imageRec->guid) == $img){
 					//img already exists, assume this is update and delete the other one first
-					$this->logger->info("Deleteing previous image");
 					wp_delete_attachment($imageRec->ID,1);
 				}
 			}
@@ -476,7 +474,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		$url = $file['url'];
 		$type = $file['type'];
 		$file = $file['file'];
-		$this->logger->info("Curent file path:{$file}");
 		$title = $name;
 		$content = '';
 
@@ -519,6 +516,24 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		set_time_limit(0); 
 		$order = 'ASC';
 		if($options) extract($options);
+		$cg = "SELECT t.term_id, t.name, x.parent FROM {$wpdb->terms} t JOIN {$wpdb->term_taxonomy} x ON  x.term_id=t.term_id WHERE x.taxonomy='wpsc_product_category'";
+		foreach($wpdb->get_results($cg,ARRAY_A) as $c){
+			$cats[$c['term_id']] = array('pid'=>$c['parent'], 'name'=>$c['name']);
+		}
+		foreach($cats as $id=>$cat){
+			$cid = $id;
+			$pid = $cat['pid'];
+			$path = $cat['name'];
+			while($cid != 0){
+				$pid = $cats[$cid]['pid'];
+				if($pid != 0){
+					$path = $cats[$pid]['name'].'->'.$path;
+				}
+				$cid = $cats[$cid]['pid'];
+			}
+			$categoryMatrix[$id] = $path;
+		}
+		unset($cats);
 
 		$sql = "SELECT ID, post_content, post_title, guid from {$wpdb->posts} WHERE post_type='wpsc-product' AND post_status in ('publish', 'draft','pending')";
 		//Loop Through all the 
@@ -576,6 +591,17 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 						}
 						$prod_tmp[$id]['variant_'.$key] = $tvar->name;
 					}
+
+					//Get Group Relationship
+					if(!(wp_cache_get('wp_get_object_terms_id_'.$id.'wpsc_product_category','ecomfeeder'))){
+							$categories = wp_get_object_terms($id,'wpsc_product_category',array('fields'=>'ids'));
+							wp_cache_set('wp_get_object_terms_id_'.$id.'wpsc_product_category',$categories,'ecomfeeder');
+					}
+					$cats = array();
+					foreach($categories as $cat){
+						$cats[] = $categoryMatrix[$cat];
+					}
+					$prod_tmp[$id]['category'] = implode('|', $cats);
 						
 				}
 			}else{
@@ -610,6 +636,16 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				if($productTags) {
 					$prod_tmp[$id]['tags'] = implode('|', $productTags);
 				}
+				//Get Group Relationship
+				if(!(wp_cache_get('wp_get_object_terms_id_'.$post->ID.'wpsc_product_category','ecomfeeder'))){
+						$categories = wp_get_object_terms($post->ID,'wpsc_product_category',array('fields'=>'ids'));
+						wp_cache_set('wp_get_object_terms_id_'.$post->ID.'wpsc_product_category',$categories,'ecomfeeder');
+				}
+				$cats = array();
+				foreach($categories as $cat){
+					$cats[] = $categoryMatrix[$cat];
+				}
+				$prod_tmp[$id]['category'] = implode('|', $cats);
 			}
 		}
 	
@@ -624,7 +660,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 	* @return mixed
 	*/
 	function getProductImages($productID){
-		$this->logger->info("Looking up curent images for:".$productID);
 		$images = get_children(array(
 			'post_parent' => $productID,
 			'post_type' => 'attachment',
