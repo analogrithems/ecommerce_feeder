@@ -11,7 +11,7 @@ global $objects, $schedules;
 	<th scope="col" id="name" class="manage-column column-name" style="">Name</th>
 	<th scope="col" id="type" class="manage-column" style="">Type</th>
 	<th scope="col" id="direction" class="manage-column" style="">Direction</th>
-	<th scope="col" id="schedule" class="manage-column num" style="">Schedule</th>
+	<th scope="col" id="schedule" class="manage-column num" style="">Purpose</th>
 	</tr>
 	</thead>
 
@@ -22,7 +22,7 @@ global $objects, $schedules;
 	<th scope="col" class="manage-column column-name" style="">Name</th>
 	<th scope="col" class="manage-column" style="">Type</th>
 	<th scope="col" class="manage-column" style="">Direction</th>
-	<th scope="col" class="manage-column num" style="">Schedule</th>
+	<th scope="col" class="manage-column num" style="">Purpose</th>
 	</tr>
 	</tfoot>
 
@@ -53,7 +53,7 @@ global $objects, $schedules;
 			</td>
 			<td class="type column-type"><?php echo $schedule['type']; ?></td>
 			<td class="slug column-slug"><?php echo $schedule['direction']; ?></td>
-			<td class="schedule column-schedule"><?php echo $schedule['schedule']; ?></td>
+			<td class="schedule column-schedule"><?php echo $schedule['object']; ?></td>
 		<?php
 			}
 		}

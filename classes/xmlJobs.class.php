@@ -27,7 +27,8 @@ class xmlJobs extends WPEC_Jobs{
 	}
 
         function validate($data){
-                if(!$this->isGood($data['source_xml'])){
+		$this->logger->info("Calling xml validate");
+                if(!$this->isGood($data['source_xml']) && empty($_FILE['source'])){
                         $this->setError("Must Give A URL to Download XML From!");
                         return false;
                 }

@@ -23,7 +23,6 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 
 	var $customers;
 	var $profiles;
-	var $scripts;
 	var $savedJobs;
 	
 	function __construct(){
@@ -33,8 +32,6 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 
 	function init(){
 		$this->savedJobs = get_option('WPEC_Jobs');
-		$this->scripts = apply_filters('ecommerce_feeder_register_script',$this->scripts);
-		return($this->scripts);
 	}
 
 	/**
@@ -117,7 +114,7 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 				return false;
 			}
 		}
-		return $results;
+		return isset($results) ? $results : false;
 	}
 
 	/**
@@ -172,11 +169,14 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	*
 	*/
 	function executeJob($instructions){
+		$this->logger->debug("executeJob:".print_r($instructions,1));
 		extract($instructions);	
 		set_time_limit(0);
-		if(isset($direction) && $direction == 'import' && isset($type) &&  array_key_exists($type, $this->scripts[$direction])){
-			do_action('ecommerce_feeder_run_import_'.$type,$object,$instructions);
-		}elseif(isset($direction) && $direction == 'export' && isset($type) &&  array_key_exists($type, $this->scripts[$direction])){
+		$scripts = apply_filters('ecommerce_feeder_register_script',array());
+		if(isset($direction) && $direction == 'import' && isset($type) &&  array_key_exists($type, $scripts[$direction])){
+			$valid = apply_filters('ecommerce_feeder_validateJob_'.$type,$instructions);
+			if($valid) do_action('ecommerce_feeder_run_import_'.$type,$object,$instructions);
+		}elseif(isset($direction) && $direction == 'export' && isset($type) &&  array_key_exists($type, $scripts[$direction])){
 			$dataSets = $this->runDataTypeExport($object);
 			do_action('ecommerce_feeder_run_export_'.$type,$object,$dataSets);
 		}

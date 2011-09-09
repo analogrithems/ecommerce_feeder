@@ -1,7 +1,7 @@
 <?php 
 
 //get our global vars inported
-global $objects, $types, $schedules, $db_drivers, $job;
+global $objects, $types, $schedules, $db_drivers;
 ?>
         <h2>WordPress eCommerce Data Feeder Import</h2>
 
@@ -31,7 +31,9 @@ global $objects, $types, $schedules, $db_drivers, $job;
 					<script>
 						jQuery(document).ready( function() {
 							<?php
-								echo "var scriptOptions = ".json_encode($job->scripts['import']).";\n";
+								$scripts['import'][] = array('name'=>__('Select Import Method','ecomfeeder'));
+                                                                $scripts = apply_filters('ecommerce_feeder_register_script',$scripts);
+								echo "var scriptOptions = ".json_encode($scripts['import']).";\n";
 								//load all the active scripts
 								if($selectedScript = fromRequest('type')){
 									echo "var selScript = '".$selectedScript."';\n";

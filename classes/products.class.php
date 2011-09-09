@@ -527,8 +527,8 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				foreach($variants as $variant){
 					$id = $variant->ID;
 
-					$name = $variant->post_title;
-					$description = $variant->post_content;
+					$name = $post->post_title;
+					$description = $post->post_content;
 
 					$prod_tmp[$id]['name'] = $name;
 					$prod_tmp[$id]['description']=$description;
@@ -560,10 +560,16 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 					}
 
 					//Get Variant info
-					$variantTaxonomies = wp_get_object_terms($id,'wpsc-variation');
+					if(!(wp_cache_get('wp_get_object_terms_'.$id.'wpsc-variation','ecomfeeder'))){
+						$variantTaxonomies = wp_get_object_terms($id,'wpsc-variation');
+						wp_cache_set('wp_get_object_terms_'.$id.'wpsc-variation',$variantTaxonomies,'ecomfeeder');
+					}
 					foreach($variantTaxonomies as $tvar){
 						if($tvar->parent > 0){
-							$parent = get_term($tvar->parent,'wpsc-variation');
+							if(!(wp_cache_get('get_term_'.$tvar->parent.'wpsc-variation','ecomfeeder'))){
+								$parent = get_term($tvar->parent,'wpsc-variation');
+								wp_cache_set('get_term_'.$tvar->parent.'wpsc-variation',$parent,'ecomfeeder');
+							}
 							$key = $parent->name;
 						}else{
 							$key = $tvar->name;

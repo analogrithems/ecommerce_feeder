@@ -30,7 +30,9 @@ global $objects, $types, $schedules, $db_drivers;
                                         <script>
                                                 jQuery(document).ready( function() {
                                                         <?php
-                                                                echo "var scriptOptions = ".json_encode($job->scripts['import']).";\n";
+								$scripts['export'][] = array('name'=>__('Select Export Method','ecomfeeder'));
+								$scripts = apply_filters('ecommerce_feeder_register_script',$scripts);
+                                                                echo "var scriptOptions = ".json_encode($scripts['export']).";\n";
                                                                 //load all the active scripts
                                                                 if($selectedScript = fromRequest('type')){
                                                                         echo "var selScript = '".$selectedScript."';\n";

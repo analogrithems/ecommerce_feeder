@@ -67,7 +67,7 @@ function wpec_data_feed_styles(){
 
 function exportData(){
 	global $logger;
-	if(isset($_REQUEST['wpec_data_feeder'])){
+	if(isset($_REQUEST['wpec_data_feeder']) && isset($_REQUEST['submit'])){
 		switch($_REQUEST['submit']){
 			case 'Export Data':
 				$job = new WPEC_Jobs();
