@@ -96,7 +96,6 @@ function display_wpe_data_feeder(){
 		wpec_data_feed_styles();
 		include('views/tab.menu.php');
 		$scheduledJobs = $job->getScheudledJobs(array('direction'=>'import'));
-		$job->prepareImportForm($data);
 		include('views/import.php');
 	}else{
 		//This is were the business logic actually happens
@@ -133,23 +132,15 @@ function display_wpe_data_feeder(){
 		}
 		//Unless some previous business stopped us, lets display the page we're looking for
 		include('views/tab.menu.php');
-		if(!isset($data) && isset($_REQUEST['wpec_data_feeder'])){
-			$data = $_REQUEST['wpec_data_feeder'];
-		}else if(isset($data)){
-			$_REQUEST['wpec_data_feeder'] = array_merge($_REQUEST['wpec_data_feeder'],$data);	
-		}else if(!isset($data)){
-			$data = '';
-		}
+		
 		switch($tab){
 			case 'import':
 				//Get the list of already saved import jobs to show the user
 				$scheduledJobs = $job->getScheudledJobs(array('direction'=>$tab));
-				$job->prepareImportForm($data);
 				include('views/import.php');
 				break;
 			case 'export';
 				$scheduledJobs = $job->getScheudledJobs(array('direction'=>$tab));
-				$job->prepareExportForm($data);
 				include('views/export.php');
 				break;
 			case 'schedule';
@@ -157,7 +148,6 @@ function display_wpe_data_feeder(){
 				include('views/scheduleDisplay.php');
 				break;
 			default:
-				$job->prepareImportForm($data);
 				include('views/import.php');
 				break;
 		}

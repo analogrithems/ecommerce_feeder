@@ -32,7 +32,8 @@ global $objects, $schedules;
 	?>
         <tbody id="the-list" class="list:tag">
 	<?php
-		foreach($scheduledJobs as $id=>$schedule){
+		if(isset($scheduledJobs) && !empty($scheduledJobs)){
+			foreach($scheduledJobs as $id=>$schedule){
 		?>
 			<tr id='schedule-<?php echo $id; ?>' class="alternate">
 			<th scope="row" class="check-column"> <input type="checkbox" name="delete_tags[]" value="<?php echo $id; ?>" /></th>
@@ -54,6 +55,7 @@ global $objects, $schedules;
 			<td class="slug column-slug"><?php echo $schedule['direction']; ?></td>
 			<td class="schedule column-schedule"><?php echo $schedule['schedule']; ?></td>
 		<?php
+			}
 		}
 		?>
 

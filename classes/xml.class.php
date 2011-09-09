@@ -119,7 +119,7 @@ class EF_XML_Helper extends WPEC_ecommerce_feeder{
 	    if ( !$children ) return (string) $xml;
 	    $arr = array();
 	    foreach ( $children as $key => $node ) {
-		$node = ArrayToXML::toArray( $node );
+		$node = EF_XML_Helper::toArray( $node );
 
 		// support for 'anon' non-associative arrays
 		if ( $key == 'anon' ) $key = count( $arr );

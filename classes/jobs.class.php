@@ -85,29 +85,6 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	}
 
 	/**
-	 * prepareImportForm([mixed $data=false])
-	 *
-	 * Get any template variables ready that will be needed for the admin import form.  $data can be passed to prepopulate a form for updates or re-submits
-	 *
-	 * @params mixed $data
-	 */
-	function prepareImportForm($data=false){
-		global $objects, $types, $db_drivers;
-		$objects = array('customers'=>'Customer Accounts', 'products'=>'Products','orders'=>'Order History');
-	}
-
-	/**
-	 * prepareExportForm([mixed $data=false])
-	 *
-	 * Get any template variables ready that will be needed for the admin export form.  $data can be passed to prepopulate a form for updates or re-submits
-	 *
-	 * @params mixed $data
-	 */
-	function prepareExportForm($data=false){
-		$this->prepareImportForm($data);
-	}
-
-	/**
 	 *
 	 * getScheudledJobs([mixed $options = false])
 	 *
@@ -127,15 +104,17 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 		if($this->isGood($options['id']) && $this->isGood($this->savedJobs[$options['id']]) ){
 			return $this->savedJobs[$options['id']];
 		}else{
-			if($this->isGood($options['direction']) && in_array($options['direction'],array('import','export'))){
+			if($this->isGood($options['direction']) && $this->isGood($this->savedJobs) &&  in_array($options['direction'],array('import','export'))){
 				foreach($this->savedJobs as $name=>$job){
 					//Find all the job types you want to display
 					if($job['direction'] == $options['direction']){
 						$results[$name] = $job;
 					}
 				}
-			}else{
+			}elseif($this->isGood($this->savedJobs)){
 				return $this->savedJobs;
+			}else{
+				return false;
 			}
 		}
 		return $results;
@@ -288,7 +267,7 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 				include_once('products.class.php');
 				$products = new WPEC_Products();
 				$dataSets = $products->exportProducts();
-				//$this->logger->info("Trying to export products:".print_r($dataSet,true));
+				$this->logger->info("Trying to export products:".print_r($dataSet,true));
 				break;
 			default:
 				$this->logger->error("Failed to Run Job, incorrect object.:".print_r($instructions,true));

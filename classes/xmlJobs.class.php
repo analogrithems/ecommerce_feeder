@@ -35,7 +35,6 @@ class xmlJobs extends WPEC_Jobs{
         }
 
 	function importForm($preset=false){
-		if(is_array($presets) && !$presets) extract($presets);
 		?>
 		<div id='<?php echo $this->script; ?>' class='hideonstart'>
 			<span class='inputLine'>
@@ -46,7 +45,6 @@ class xmlJobs extends WPEC_Jobs{
 	}
 	
 	function exportForm($presets){
-		if(is_array($presets) && !$presets) extract($presets);
 		?>
 		<div id='<?php echo $this->script; ?>' class='hideonstart'>
 			<span class='inputLine'>
