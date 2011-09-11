@@ -79,7 +79,7 @@ class EF_XML_Helper extends WPEC_ecommerce_feeder{
 			// older SimplXMLElement Libraries do not have the addChild Method
 			if (method_exists('SimpleXMLElement','addChild'))
 			{
-			    $xml->addChild( $key,$value );
+			    $xml->addChild( $key,htmlentities($value,ENT_QUOTES) );
 			}
 			else
 			{   // alternative / dirty method for adding a child
@@ -125,9 +125,9 @@ class EF_XML_Helper extends WPEC_ecommerce_feeder{
 		// if the node is already set, put it into an array
 		if ( isset( $arr[$key] ) ) {
 		    if ( !is_array( $arr[$key] ) || $arr[$key][0] == null ) $arr[$key] = array( $arr[$key] );
-		    $arr[$key][] = $node;
+		    $arr[$key][] = html_entity_decode($node,ENT_QUOTES);
 		} else {
-		    $arr[$key] = $node;
+		    $arr[$key] = html_entity_decode($node,ENT_QUOTES);
 		}
 	    }
 	    return $arr;

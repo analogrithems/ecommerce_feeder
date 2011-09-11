@@ -229,11 +229,9 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		if(($_term = term_exists($term, $taxonomy, $parent_id)) == 0){
 			//Parent Doesn't Exsits, add it
 			$slug = preg_replace('/[\`\~\!\@\#\$\%\^\*\(\)\; \,\.\'\/\-]/i','_',$term);
-			$this->logger->debug("Adding New Term: {$term} for Taxonomy: {$taxonomy} with Parent:{$parent_id}");
 			$newTerm = wp_insert_term( $term, $taxonomy, array('slug'=>$slug, 'parent'=>$parent_id));
 			return $newTerm['term_id'];
 		}else{
-			$this->logger->debug("Found it as: ".print_r($_term,1));
 			return $_term['term_id'];
 		}
 	}
@@ -537,54 +535,61 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 
 		$sql = "SELECT ID, post_content, post_title, guid from {$wpdb->posts} WHERE post_type='wpsc-product' AND post_status in ('publish', 'draft','pending')";
 		//Loop Through all the 
-		foreach($wpdb->get_results($sql,OBJECT_K) as $post){
-			if($variants =& get_children(array('post_parent'=>$post->ID, 'post_type'=>'wpsc-product','order'=> "ASC"))){
+		$posts = $wpdb->get_results($sql,OBJECT_K);
+		$wpdb->flush();
+		foreach($posts as $post){
+			$sql = "SELECT ID, post_content, post_title, guid from {$wpdb->posts} WHERE post_type='wpsc-product' AND post_status='inherit' AND post_parent={$post->ID}";
+			if($variants = $wpdb->get_results($sql,OBJECT_K)){
+				$wpdb->flush();
 				foreach($variants as $variant){
 					$id = $variant->ID;
+					$meta = $this->get_meta($id);
 
 					$name = $post->post_title;
 					$description = $post->post_content;
 
 					$prod_tmp[$id]['name'] = $name;
 					$prod_tmp[$id]['description']=$description;
-					$prod_tmp[$id]['price'] = get_post_meta($id, '_wpsc_price', true );
-					$prod_tmp[$id]['special_price'] = get_post_meta($id, '_wpsc_special_price', true );
-					$prod_tmp[$id]['sku'] = get_post_meta($id, '_wpsc_sku', true );
-					$prod_tmp[$id]['upc'] = $prod_tmp[$id]['sku'];
-					$prod_tmp[$id]['image'] = wpsc_the_product_image(false,false,$id);
-					$prod_meta = get_post_meta($id, '_wpsc_product_metadata');
-					if(isset($prod_meta['weight'])){
-						$prod_tmp[$id]['weight'] = $prod_meta['weight'].$prod_meta['weight_unit'];
+					if($this->isGood($meta['_wpsc_price'])) $prod_tmp[$id]['price'] = $meta['_wpsc_price'];
+					if($this->isGood($meta['_wpsc_special_price'])) $prod_tmp[$id]['special_price'] = $meta['_wpsc_special_price'];
+					if($this->isGood($meta['_wpsc_stock'])) $prod_tmp[$id]['quantity'] = $meta['_wpsc_stock'];
+					if($this->isGood($meta['_wpsc_sku'])){
+						$prod_tmp[$id]['sku'] = $meta['_wpsc_sku'];
+						$prod_tmp[$id]['upc'] = $prod_tmp[$id]['sku'];
 					}else{
-						$prod_tmp[$id]['weight'] = 0;
+						$prod_tmp[$id]['sku'] = $id;
 					}
-					$quantity = get_post_meta($id, '_wpsc_stock', true);
-					if(!empty($quantity)) $prod_tmp[$id]['quantity'] = $quantity;
-			
-					//Pack the custom meta
-					foreach(get_post_custom_keys($id) as $cmeta){
-						if(preg_match('/^_wpsc_/',$cmeta) == 1) continue;
-						$prod_tmp[$id]['meta_'.$cmeta] = get_post_meta($id,$cmeta,true);
+					if($this->isGood($meta['_wpsc_product_metadata'])){
+						$prod_meta = unserialize($meta['_wpsc_product_metadata']);
+						if(isset($prod_meta['weight'])){
+							$prod_tmp[$id]['weight'] = $prod_meta['weight'].$prod_meta['weight_unit'];
+						}else{
+							$prod_tmp[$id]['weight'] = 0;
+						}
 					}
 
+					foreach(array_keys($meta) as $cmeta){
+						if(preg_match('/^_wpsc_/',$cmeta) == 1) continue;
+						$prod_tmp[$id]['meta_'.$cmeta] = $meta[$cmeta];
+					}
+					unset($meta);
+					unset($prod_meta);
+					$prod_tmp[$id]['image'] = $this->exportImages($id);
+			
 					//Pack the product Tags
 					//TODO look for product_tag taxonomy
 					$productTags = wp_get_object_terms( $post->ID, 'product_tag', array( 'fields' => 'names' ) );
+					$wpdb->flush();
 					if($productTags) {
 						$prod_tmp[$id]['tags'] = implode('|', $productTags);
 					}
-
 					//Get Variant info
-					if(!(wp_cache_get('wp_get_object_terms_'.$id.'wpsc-variation','ecomfeeder'))){
-						$variantTaxonomies = wp_get_object_terms($id,'wpsc-variation');
-						wp_cache_set('wp_get_object_terms_'.$id.'wpsc-variation',$variantTaxonomies,'ecomfeeder');
-					}
+					$variantTaxonomies = wp_get_object_terms($id,'wpsc-variation');
+					$wpdb->flush();
 					foreach($variantTaxonomies as $tvar){
 						if($tvar->parent > 0){
-							if(!(wp_cache_get('get_term_'.$tvar->parent.'wpsc-variation','ecomfeeder'))){
-								$parent = get_term($tvar->parent,'wpsc-variation');
-								wp_cache_set('get_term_'.$tvar->parent.'wpsc-variation',$parent,'ecomfeeder');
-							}
+							$parent = get_term($tvar->parent,'wpsc-variation');
+							$wpdb->flush();
 							$key = $parent->name;
 						}else{
 							$key = $tvar->name;
@@ -593,54 +598,54 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 					}
 
 					//Get Group Relationship
-					if(!(wp_cache_get('wp_get_object_terms_id_'.$id.'wpsc_product_category','ecomfeeder'))){
-							$categories = wp_get_object_terms($id,'wpsc_product_category',array('fields'=>'ids'));
-							wp_cache_set('wp_get_object_terms_id_'.$id.'wpsc_product_category',$categories,'ecomfeeder');
-					}
+					$categories = wp_get_object_terms($id,'wpsc_product_category',array('fields'=>'ids'));
+					$wpdb->flush();
 					$cats = array();
 					foreach($categories as $cat){
 						$cats[] = $categoryMatrix[$cat];
 					}
 					$prod_tmp[$id]['category'] = implode('|', $cats);
-						
 				}
 			}else{
 				if(isset($post->post_title)) $prod_tmp[$post->ID]['name'] = $post->post_title;
 				if(isset($post->post_content)) $prod_tmp[$post->ID]['description'] = $post->post_content;
 				if(isset($post->post_status) && $post->post_status == 'publish') $prod_tmp[$post->ID]['active'] = true;
 				else $prod_tmp[$post->ID]['active'] = false;
-			
-				//get the price
-				$prod_tmp[$post->ID]['price'] = get_post_meta($post->ID, '_wpsc_price', true );
-				$prod_tmp[$post->ID]['special_price'] = get_post_meta($post->ID, '_wpsc_special_price', true );
-				$prod_tmp[$post->ID]['sku'] = get_post_meta($post->ID, '_wpsc_sku', true );
-				$prod_tmp[$post->ID]['upc'] = $prod_tmp[$post->ID]['sku'];
-				$prod_tmp[$post->ID]['image'] = wpsc_the_product_image(false,false,$post->ID);
-				$prod_meta = get_post_meta($post->ID, '_wpsc_product_metadata');
-				if(isset($prod_meta['weight'])){
-					$prod_tmp[$post->ID]['weight'] = $prod_meta['weight'].$prod_meta['weight_unit'];
+				$id = $post->ID;
+				unset($post);
+				$meta = $this->get_meta($id);
+				if($this->isGood($meta['_wpsc_price'])) $prod_tmp[$id]['price'] = $meta['_wpsc_price'];
+				if($this->isGood($meta['_wpsc_special_price'])) $prod_tmp[$id]['special_price'] = $meta['_wpsc_special_price'];
+				if($this->isGood($meta['_wpsc_stock'])) $prod_tmp[$id]['quantity'] = $meta['_wpsc_stock'];
+				if($this->isGood($meta['_wpsc_sku'])){
+					$prod_tmp[$id]['sku'] = $meta['_wpsc_sku'];
+					$prod_tmp[$id]['upc'] = $prod_tmp[$id]['sku'];
 				}else{
-					$prod_tmp[$post->ID]['weight'] = 0;
+					$prod_tmp[$id]['sku'] = $id;
 				}
-				
-				$quantity = get_post_meta($post->ID, '_wpsc_stock', true);
-				if(!empty($quantity)) $prod_tmp[$post->ID]['quantity'] = $quantity;
-				//Custom Meta
-				foreach(get_post_custom_keys($post->ID) as $cmeta){
-					if(preg_match('/^_wpsc_/',$cmeta) == 1) continue;
-					$prod_tmp[$post->ID]['meta_'.$cmeta] = get_post_meta($post->ID,$cmeta,true);
+				if($this->isGood($meta['_wpsc_product_metadata'])){
+					$prod_meta = unserialize($meta['_wpsc_product_metadata']);
+					if(isset($prod_meta['weight']) && isset($prod_meta['weight_unit'])){
+						$prod_tmp[$id]['weight'] = $prod_meta['weight'].$prod_meta['weight_unit'];
+					}else{
+						$prod_tmp[$id]['weight'] = 0;
+					}
 				}
 
+				foreach(array_keys($meta) as $cmeta){
+					if(preg_match('/^_wpsc_/',$cmeta) == 1) continue;
+					$prod_tmp[$id]['meta_'.$cmeta] = $meta[$cmeta];
+				}
+			
+				$prod_tmp[$id]['image'] = $this->exportImages($id);
 				//Pack the product Tags
-				$productTags = wp_get_object_terms( $post->ID, 'product_tag', array( 'fields' => 'names' ) );
+				$productTags = wp_get_object_terms( $id, 'product_tag', array( 'fields' => 'names' ) );
+				$wpdb->flush();
 				if($productTags) {
 					$prod_tmp[$id]['tags'] = implode('|', $productTags);
 				}
-				//Get Group Relationship
-				if(!(wp_cache_get('wp_get_object_terms_id_'.$post->ID.'wpsc_product_category','ecomfeeder'))){
-						$categories = wp_get_object_terms($post->ID,'wpsc_product_category',array('fields'=>'ids'));
-						wp_cache_set('wp_get_object_terms_id_'.$post->ID.'wpsc_product_category',$categories,'ecomfeeder');
-				}
+				$categories = wp_get_object_terms($id,'wpsc_product_category',array('fields'=>'ids'));
+				$wpdb->flush();
 				$cats = array();
 				foreach($categories as $cat){
 					$cats[] = $categoryMatrix[$cat];
@@ -653,6 +658,29 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		return($prod_tmp);
 	}
 
+	function get_meta($id){
+		global $wpdb;
+		$sql = "SELECT * FROM {$wpdb->postmeta} WHERE post_id=".(int)$id;
+		
+		foreach($wpdb->get_results($sql, ARRAY_A) as $t){
+			$results[$t['meta_key']] = $t['meta_value'];
+		}
+		$wpdb->flush();;
+		if(isset($results)) return($results);
+		else return false;
+	}
+		
+
+	function exportImages($pid){
+		$t = array();
+		foreach($this->getProductImages($pid) as $img){
+			$t[] = $img->guid;
+		}
+		return implode('|',$t);
+	}
+		
+		
+
 	/**
 	* getProductImages($productID) get all the images for a specific product.
 	*
@@ -660,11 +688,13 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 	* @return mixed
 	*/
 	function getProductImages($productID){
+		global $wpdb;
 		$images = get_children(array(
 			'post_parent' => $productID,
 			'post_type' => 'attachment',
 			'post_mime_type' => 'image',)
 		);
+		$wpdb->flush();
 		return $images;
 	}
 }

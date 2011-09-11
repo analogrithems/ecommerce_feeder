@@ -84,7 +84,7 @@ class xmlJobs extends WPEC_Jobs{
                 if($dataSets){
 			include_once('xml.class.php');
 			$xml = new EF_XML_Helper();
-			header ("Content-Type:text/xml");
+			header('Content-Type: application/octet-stream');
 			echo $xml->toXML($dataSets,$data_type);
 			exit();
                 }else{
