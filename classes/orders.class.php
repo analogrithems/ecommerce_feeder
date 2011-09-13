@@ -27,7 +27,42 @@ class WPEC_Orders extends WPEC_ecommerce_feeder{
 	}
 
 	function updateOrders($orders=false){
+		global $wpdb;
 		if($orders == false) return false;
+		$plFields = array('totalprice','statusno','sessionid','transactid','authcode','processed','user_ID','date','gateway','billing_country',
+				'shipping_country','base_shipping','email_sent','stock_adjusted','discount_value','discount_data','track_id','billing_region',
+				'shipping_region','find_us','engravetext','shipping_method','shipping_option','affiliate_id','plugin_version','notes',
+				'wpec_taxes_total','wpec_taxes_rate');
+				
+		$ciFields = array('prodid','name','price','pnp','tax_charged','gst','quantity','donation','no_shipping','custom_message','files','meta');
+		$formResults = $wpdb->get_results("SELECT id,unique_name FROM ".WPSC_TABLE_CHECKOUT_FORMS." WHERE unique_name!=''");
+		foreach($formResults as $f){
+			$formFields[$f['unique_name']] = $f['id'];
+		}
+		unset($formResults);
+		foreach($orders as $order){
+			foreach($plFields as $field){	
+				if($this->isGood($order[$field])) $rec[$field] = $order[$field];
+			}
+			$wpdb->insert(WPSC_TABLE_PURCHASE_LOGS,$rec);
+			$purchase_id = $wpdb->insert_id;
+
+			//Add Items to order
+			if(isset($order['items'])){
+				foreach($order['items'] as $item){
+					foreach($ciFields as $field){
+						if($this->isGood($item[$field])) $ritm[$field] = $item[$field];
+					}
+					if(isset($purchase_id)) $ritm['purchaseid'] = $purchase_i;
+					$wpdb->insert(WPSC_TABLE_CART_CONTENTS,$ritm);
+				}
+			}
+			foreach($formFields as $sf=>$id){
+				if(isset($order[$sf])){
+					$wpdb->insert(WPSC_TABLE_SUBMITED_FORM_DATA,array('log_id'=>$purchase_id,'form_id'=>$id,'value'=>$order[$sf]));
+				}
+			}
+		}
 	}
 
 	function exportOrders(){
