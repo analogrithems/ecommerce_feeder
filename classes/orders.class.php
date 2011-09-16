@@ -40,8 +40,9 @@ class WPEC_Orders extends WPEC_ecommerce_feeder{
 			$formFields[$f['unique_name']] = $f['id'];
 		}
 		unset($formResults);
-		$results = array('added=>0,'updated'=>0);
+		$results = array('added'=>0,'updated'=>0);
 		foreach($orders as $order){
+			$this->logger->info('Inserting Order:'.print_r($order,1));
 			foreach($plFields as $field){	
 				if($this->isGood($order[$field])) $rec[$field] = $order[$field];
 			}
@@ -62,11 +63,13 @@ class WPEC_Orders extends WPEC_ecommerce_feeder{
 				}
 			}
 			foreach($formFields as $sf=>$id){
+				$this->logger->info("checking if order has for {$sf}:");
 				if(isset($order[$sf])){
 					$wpdb->insert(WPSC_TABLE_SUBMITED_FORM_DATA,array('log_id'=>$purchase_id,'form_id'=>$id,'value'=>$order[$sf]));
 				}
 			}
 		}
+		return $results;
 	}
 
 	function exportOrders(){
