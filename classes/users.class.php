@@ -71,7 +71,7 @@ class WPEC_Users extends WPEC_ecommerce_feeder{
 			}elseif($this->isGood($row['encrypted_password'])){
 				$encrypted = $row['encrypted_password'];
 				unset($row['encrypted_password']);
-				$row['user_pass']=$row['encrypted_password'];
+				$row['user_pass']=$encrypted;
 			}
 
 			if($this->isGood($row['nickname'])){
@@ -86,6 +86,8 @@ class WPEC_Users extends WPEC_ecommerce_feeder{
 				$email = $row['email'];
 				$row['user_email'] = $row['email'];
 				unset($row['email']);
+			}elseif($this->isGood($row['user_email'])){
+				$email = $row['user_email'];
 			}
 			
 			foreach($row as $column=>$value){
@@ -121,6 +123,7 @@ class WPEC_Users extends WPEC_ecommerce_feeder{
 				
 			}
 
+			$update_wpec = false;
 			foreach($user_wpec as $field=>$value){
 				$field = substr($field,5);
 				if($wpec = array_search($field,$this->wpec_meta)){
