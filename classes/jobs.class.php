@@ -217,9 +217,10 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 			case 'orders':
 				//We are importing orders, run it
 				include_once('orders.class.php');
-				$this->logger->info("Trying tp update orders:".print_r($dataSet[1],true));
+				$this->logger->info("Trying tp update orders:".print_r($dataSet,true));
 				$orders = new WPEC_Orders();
-				$orders->updateOrders($dataSet);
+				$results = $orders->updateOrders($dataSet);
+				$_SESSION['status_msg'] = "{$results['added']}/{$results['updated']} ".__('Orders Added/Updated','wpsc');
 				break;
 			case 'customers':
 				//We are importing customers, run it

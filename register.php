@@ -82,7 +82,7 @@ function exportData(){
 add_action('admin_menu', 'exportData');
 	
 function display_wpe_data_feeder(){
-	global $data_feed_page, $tab, $logger, $scheduledJobs, $job;
+	global $data_feed_page, $data, $tab, $logger, $scheduledJobs, $job;
 	//Trying out Smarty
 	$tab = isset($_REQUEST['wpec_data_feeder']['direction'])? $_REQUEST['wpec_data_feeder']['direction'] : 'import';
 	$result = false;
@@ -199,8 +199,11 @@ function htmlOptions($options, $selected = null){
 }
 
 function fromRequest($var){
+	global $data;
 	if(isset($_REQUEST['wpec_data_feeder'][$var])){
 		return $_REQUEST['wpec_data_feeder'][$var];
+	}elseif(isset($data[$var])){
+		return $data[$var];
 	}else{
 		return '';
 	}

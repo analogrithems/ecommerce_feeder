@@ -35,17 +35,21 @@ class WPEC_Orders extends WPEC_ecommerce_feeder{
 				'wpec_taxes_total','wpec_taxes_rate');
 				
 		$ciFields = array('prodid','name','price','pnp','tax_charged','gst','quantity','donation','no_shipping','custom_message','files','meta');
-		$formResults = $wpdb->get_results("SELECT id,unique_name FROM ".WPSC_TABLE_CHECKOUT_FORMS." WHERE unique_name!=''");
+		$formResults = $wpdb->get_results("SELECT id,unique_name FROM ".WPSC_TABLE_CHECKOUT_FORMS." WHERE unique_name!=''",ARRAY_A);
 		foreach($formResults as $f){
 			$formFields[$f['unique_name']] = $f['id'];
 		}
 		unset($formResults);
+		$results = array('added=>0,'updated'=>0);
 		foreach($orders as $order){
 			foreach($plFields as $field){	
 				if($this->isGood($order[$field])) $rec[$field] = $order[$field];
 			}
 			$wpdb->insert(WPSC_TABLE_PURCHASE_LOGS,$rec);
 			$purchase_id = $wpdb->insert_id;
+			if($this->isGood($purchase_id)){
+				$results['added']++;
+			}
 
 			//Add Items to order
 			if(isset($order['items'])){
@@ -53,7 +57,7 @@ class WPEC_Orders extends WPEC_ecommerce_feeder{
 					foreach($ciFields as $field){
 						if($this->isGood($item[$field])) $ritm[$field] = $item[$field];
 					}
-					if(isset($purchase_id)) $ritm['purchaseid'] = $purchase_i;
+					if(isset($purchase_id)) $ritm['purchaseid'] = $purchase_id;
 					$wpdb->insert(WPSC_TABLE_CART_CONTENTS,$ritm);
 				}
 			}
