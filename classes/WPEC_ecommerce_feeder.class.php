@@ -28,8 +28,9 @@ class WPEC_ecommerce_feeder{
 
 	public function __construct() {
                 global $logger;
-                $this->logger = $logger;
+                $this->logger = &$logger;
 		if(isset($_SESSION['error_msg'])) unset($_SESSION['error_msg']);
+		if(isset($_SESSION['status_msg'])) unset($_SESSION['status_msg']);
 		$filesUploaded = array();
 	}
 

@@ -31,6 +31,8 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	}
 
 	function init(){
+		if ( ! function_exists( 'admin_url' ) )
+			return false;
 		$this->savedJobs = get_option('WPEC_Jobs');
 	}
 
@@ -161,6 +163,21 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 		$this->executeJob($job);
 	}
 
+
+	function getCount($instructions=false){
+		extract($instructions);
+		$scripts = apply_filters('ecommerce_feeder_register_script',array());
+		if(isset($direction) && $direction == 'import' && isset($type) &&  array_key_exists($type, $scripts[$direction])){
+                        $valid = apply_filters('ecommerce_feeder_validateJob_'.$type,$instructions);
+                        if($valid) $count = apply_filters('ecommerce_feeder_import_get_count_'.$type,$object,$instructions);
+                }elseif(isset($direction) && $direction == 'export' && isset($type) &&  array_key_exists($type, $scripts[$direction])){
+                        $dataSets = $this->runDataTypeExport($object);
+                        $count = apply_filters('ecommerce_feeder_export_get_count_'.$type,$object,$dataSets);
+                }
+		if(isset($count)) return $count;
+		else return false;
+	}
+
 	/**
 	* executeJob($instructions)
 	* This executes the job
@@ -220,7 +237,6 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 				$this->logger->info("Trying tp update orders:".print_r($dataSet,true));
 				$orders = new WPEC_Orders();
 				$results = $orders->updateOrders($dataSet);
-				$_SESSION['status_msg'] = "{$results['added']}/{$results['updated']} ".__('Orders Added/Updated','wpsc');
 				break;
 			case 'customers':
 				//We are importing customers, run it
@@ -229,7 +245,6 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 				$this->logger->info("Trying to update customers:".print_r($dataSet,true));
 				$customers = new WPEC_Users();
 				$results = $customers->updateUsers($dataSet);
-				$_SESSION['status_msg'] = "{$results['added']}/{$results['updated']} ".__('Users Added/Updated','wpsc');
 				break;
 			case 'products':
 				//We are importing products, run it
@@ -238,7 +253,6 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 				$this->logger->info("Trying tp update products:".print_r($dataSet,true));
 				$products = new WPEC_Products();
 				$products->updateProduct($dataSet);
-				$_SESSION['status_msg'] = "{$productUpdates}/{$variantUpdates} ".__('Products/Variants updated','wpsc');
 				break;
 			default:
 				$this->logger->error("Failed to Run Job, incorrect object.:".print_r($instructions,true));
@@ -272,8 +286,34 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 				break;
 			default:
 				$this->logger->error("Failed to Run Job, incorrect object.:".print_r($instructions,true));
+				$_SESSION['error_msg'] = __("Failed to Run Job, incorrect object.:",'ecommerce_feeder').print_r($instructions,true);
 				break;
 		}
 		return($dataSets);
+	}
+
+	function ajax_job(){
+		global $user_ID;
+		@error_reporting( 0 ); // Don't break the JSON result
+		@set_time_limit( 900 ); // 5 minutes per image should be PLENTY
+		header( 'Content-type: application/json' );
+	
+		if($this->isGood($_REQUEST['task']) && isset($_REQUEST['id']) && is_numeric($_REQUEST['id']) ){
+			$id = $_REQUEST['id'];
+			$task = $_REQUEST['task'];
+			$task['limit'] = $id;
+			$this->logger->info("Running job with:".print_r($task,1));
+			$this->executeJob($task);
+			if($this->isGood($_SESSION['status_msg'])){
+				die(json_encode(array('success'=>$this->esc_quotes($_SESSION['status_msg']))));
+			}elseif($this->isGood($_SESSION['error_msg'])){
+				die(json_encode(array('error'=>$this->esc_quotes($_SESSION['error_msg']))));
+			}
+		}
+	}
+	
+	// Helper function to escape quotes in strings for use in Javascript
+	function esc_quotes( $string ) {
+		return str_replace( '"', '\"', $string );
 	}
 }

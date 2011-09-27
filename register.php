@@ -17,6 +17,7 @@ Author URI: http://www.analogrithems.com
 
 global $logger, $ecom_plugin;
 define('ECOMMERCE_FEEDER', '20110701');
+define('ECOMMFEEDER_DEBUG', 5);
 $ecom_plugin = WP_PLUGIN_DIR . '/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
 
 
@@ -52,6 +53,15 @@ if (is_admin()){
 		add_action('admin_init','wpsc_data_feeder_init');		
 		return $page_hooks;
 	}
+	function ecommfeeder_ajax_job(){
+		global $job, $logger;
+                unset($_SESSION['status_msg']);
+                unset($_SESSION['error_msg']);
+		$logger->info("Ajax Job");
+		$job = new WPEC_Jobs();
+		$job->ajax_job();
+	}
+	add_action('wp_ajax_ecomm_feeder_task', 'ecommfeeder_ajax_job');
 }
 add_filter('wpsc_additional_pages', 'wpsc_add_data_feeder_page',10, 2);
 
@@ -63,6 +73,15 @@ function wpsc_data_feeder_init(){
 
 function wpec_data_feed_styles(){
 	wp_enqueue_style( 'ecomm_data');
+	wp_enqueue_script('jquery-ui-core');
+	wp_enqueue_script('jquery-ui-widget');
+// WordPress 3.1 vs older version compatibility
+	if ( wp_script_is( 'jquery-ui-widget', 'registered' ) )
+		wp_enqueue_script( 'jquery-ui-progressbar', plugins_url( 'jquery-ui/jquery.ui.progressbar.min.js', __FILE__ ), array( 'jquery-ui-core', 'jquery-ui-widget' ), '1.8.6' );
+	else
+		wp_enqueue_script( 'jquery-ui-progressbar', plugins_url( 'jquery-ui/jquery.ui.progressbar.min.1.7.2.js', __FILE__ ), array( 'jquery-ui-core' ), '1.7.2' );
+
+	wp_enqueue_style( 'jquery-ui-regenthumbs', plugins_url( 'jquery-ui/redmond/jquery-ui-1.7.2.custom.css', __FILE__ ), array(), '1.7.2' );
 }
 
 function exportData(){
@@ -82,7 +101,7 @@ function exportData(){
 add_action('admin_menu', 'exportData');
 	
 function display_wpe_data_feeder(){
-	global $data_feed_page, $data, $tab, $logger, $scheduledJobs, $job;
+	global $data_feed_page, $data, $tab, $logger, $scheduledJobs, $job, $task, $count;
 	//Trying out Smarty
 	$tab = isset($_REQUEST['wpec_data_feeder']['direction'])? $_REQUEST['wpec_data_feeder']['direction'] : 'import';
 	$result = false;
@@ -103,7 +122,10 @@ function display_wpe_data_feeder(){
 			switch($_REQUEST['submit']){
 				case 'Run Now':
 					$logger->debug("Running Debug");
-					if(isset($_REQUEST['wpec_data_feeder']) ) $result = $job->runJob($_REQUEST['wpec_data_feeder']);
+					if(isset($_REQUEST['wpec_data_feeder']) ) $count = $job->getCount($_REQUEST['wpec_data_feeder']);
+					$task = $_REQUEST['wpec_data_feeder'];
+					include('views/runJob.php');
+					die();
 					break;
 				case 'Save Job':
 					if(isset($_REQUEST['wpec_data_feeder'])){

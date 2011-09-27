@@ -34,7 +34,151 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		$this->itemsAdded = array();
 	}
 
-	function updateProduct($products){
+/*
+	function updateProduct(&$products){
+		wp_reset_query();
+		global $wpdb, $user_ID;
+		set_time_limit(0);
+
+		//Set some defaults
+		$results = array('products'=>array('Created'=>0,'Updated'=>0), 'variants'=>array('Created'=>0,'Updated'=>0));
+		$ProductDefaults = array(
+		'post_status' => 'draft', 
+		'post_type' => 'wpsc-product',
+		'post_author' => $user_ID,
+		'ping_status' => get_option('default_ping_status'), 
+		'post_parent' => 0,
+		'post_category' => 0,
+		'post_content' => 0,
+		'post_title' => 0,
+		'import_id' => 0);
+		$product_post = array('name'=>'post_title','style'=>'import_id','description'=>'post_content', 'sku'=>'import_id', 'upc'=>'import_id','status'=>'post_status', 'active'=>'post_status');
+		$product_columns = array('name'=>'name','description'=>'description','additional_description'=>'additional_description','price'=>'price','special_price'=>'special_price',
+			'weight'=>'weight', 'weight_unit'=>'weight_unit', 'pnp'=>'pnp','international_pnp'=>'international_pnp','file'=>'file','iamge'=>'image','quantity_limited'=>'quantity_limited',
+			'special'=>'special','special_price'=>'special_price','display_frontpage'=>'display_frontpage','notax'=>'notax','publish'=>'publish','active'=>'active', 'donation'=>'donation',
+			'no_shipping'=>'no_shipping');
+		$productMeta = array('unpublish_when_none_left'=>'unpublish_when_none_left','no_shipping'=>'no_shipping','special'=>'special','quantity_limited'=>'quantity_limited',
+				'display_weight_as'=>'display_weight_as','weight'=>'weight', 'enable_comments'=>'enable_comments','merchant_notes'=>'merchant_notes',
+				'google_prohibited'=>'google_prohibited');
+		$meta = array('sku'=>'_wpsc_sku','price'=>'_wpsc_price','special_price'=>'_wpsc_special_price', 'donation'=>'_wpsc_is_donation', 'quantity'=>'_wpsc_stock');
+			
+		$r = 0;
+		$t = count($products);	
+		$originalPOST = $_POST;
+		if(!is_array($products)){
+			$products[] = $products;
+		}
+		foreach($products as $row){
+			//The wpsc functions expect the magic to come from the POST
+			$_POST=array();
+			$is_variant=false;
+			$r++;
+			if($this->isGood($row)){
+				$this->logger->info("Row: {$r}/{$t}");
+
+				//Set _POST for wpsc to get when it hooks into the wp_insert_post
+				$product = $ProductDefaults;
+				foreach($product_post as $from=>$to){
+					if($this->isGood($row[$from])){
+						$product[$to] = $row[$from];
+					}
+				}
+
+                                //Setup The custom meta info
+                                foreach($row as $k=>$v){
+                                        if( is_string($k) && $this->isGood($v) && (preg_match('/^meta_/',$k) > 0) ){
+                                                $_POST['new_custom_meta']['name'][] =  substr($k,5);
+                                                $_POST['new_custom_meta']['value'][] = $v;
+                                        }
+					if( is_string($k) && $this->isGood($v) && (preg_match('/^variant_/',$k) > 0) ){
+						$variantName = substr($k,8);
+						$variantValue = $v;
+						$is_variant=true;
+                                        }
+                                }
+				
+				//Load the Meta
+				foreach($meta as $from=>$to){
+					if($this->isGood($row[$from])){
+						$_POST['meta'][$to] = $row[$from];
+					}
+				}
+				//Load the product Meta
+				foreach($productMeta as $from=>$to){
+					if($this->isGood($row[$from])){
+						$_POST['meta']['_wpsc_product_metadata'][$to] = $row[$from];
+					}
+				}
+				
+				foreach($product_columns as  $column=>$title){
+					if($this->isGood($row[$column])){
+						$_POST[$column] = $row[$column];
+					}
+				}
+				
+				//See if this product already exists
+				if($this->isGood($product['import_id'])){
+					$currentProduct = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'import_id', 'meta_value'=>$product['import_id'] ) );
+				}
+				if($this->isGood($currentProduct)){
+					//It does already exists, update the record, possibly add/set a variant
+					$product_id = $currentProduct[0]->ID;
+					//This is an update, increment the counter
+					$results['products']['Updated']++;
+					$_SESSION['status_msg'] .= __('Updating Product: ','ecommerce_feeder').$product['post_title'].'. ';
+					$product['import_id'] = $product_id;
+					$product['ID'] = $product_id;
+				}else{
+					//New product get the
+					$results['products']['Created']++;
+					$_SESSION['status_msg'] .= __('Adding Product: ','ecommerce_feeder').$product['post_title'].'. ';
+				}
+
+				//Update Base Product
+				if($this->isGood($product['post_status']) && $product['post_status'] == 1) $product['post_status'] = 'publish';
+				$product_id = wp_insert_post($product,true);
+
+				//Now Lets handle the images
+				if($this->isGood($row['image'])){
+					$images = explode(' | ', $row['image']);
+					foreach($images as $image){
+						$image_id = $this->image_handle_upload($image,$product_id);
+					}
+				}
+
+				//Are their variants?
+				if($is_variant){
+					$result = $this->updateVariant($product_id, $product);
+					$_SESSION['status_msg'] .=  __('With Variant: ','ecommerce_feeder').$variantName.'='.$variantValue;
+				}
+
+                                if($this->isGood($row['tags'])){
+                                        //Makes the tags a santizied array product_tag
+                                        $row['tags'] = explode('|',preg_replace('/\s+\|\s+/','|',$row['tags']));
+                                        wp_set_object_terms($product_id,$row['tags'],'product_tag');
+                                }
+                                //This sets the category, if category doesn't exists yet makes it.
+                                if($this->isGood($row['category'])){
+                                        $categoryPath = explode('->',$row['category']);
+                                        if(count($categoryPath) > 1){
+                                                $pid = $this->getVariant($categoryPath[0],'wpsc_product_category');
+                                                for($i=1;count($categoryPath) > $i;$i++){
+                                                        $pid = $this->getVariant($categoryPath[$i],'wpsc_product_category',$pid);
+                                                }
+                                                $row['category'] = (int)$pid;
+                                        }else{
+                                                $row['category'] = (int)$this->getVariant($categoryPath[0],'wpsc_product_category');
+                                        }
+                                        $this->logger->info("Adding {$row['category']} to productid {$product_id}");
+                                        wp_set_object_terms($product_id,$row['category'],'wpsc_product_category');
+                                }
+			}
+		}
+	}
+
+
+*/
+	function updateProduct(&$products){
 		wp_reset_query();
 		global $wpdb, $productUpdates, $variantUpdates;
 		$productUpdates = 0;
@@ -111,6 +255,7 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 							$image_id = $this->image_handle_upload($image,$row['product_id']);
 						}
 					}
+					$_SESSION['status_msg'] .= __("Updating Product:",'ecommerce_feeder').$row['name'].'. ';
 					$result = $this->updateVariant($row['product_id'], $row);
 					$variantUpdates++;
 				}
@@ -123,9 +268,10 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 					if($this->isGood($row['image'])){
 						$images = explode(' | ', $row['image']);
 						foreach($images as $image){
-							$image_id = $this->image_handle_upload($image,$row['product_id']);
+							$image_id = $this->image_handle_upload($image,$product_id);
 						}
 					}
+					$_SESSION['status_msg'] .= __("Adding Product:",'ecommerce_feeder').$row['name'].'. ';
 					$result = $this->updateVariant($product_id,$row);
 				}
 				//Products tags
@@ -162,6 +308,9 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		}
 
 	}
+
+
+
 	/*
 	* Need to get current Varaiants before adding a new one, otherwise it may overwrite
 	*
@@ -172,6 +321,7 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 			if( is_string($k) && $this->isGood($v) && (preg_match('/^variant_/',$k) > 0) ){
 				$hasVariant=true;
 				$varName = substr($k,8);
+				$_SESSION['status_msg'] .= __('With Variant:','ecommerce_feeder').$varName.'='.$v.'.';
 				$var_pid = $this->getVariant($varName,'wpsc-variation');
 				$var_id = $this->getVariant($v,'wpsc-variation',$var_pid);
 				$variantCombo[$var_pid][$var_id] = 1;
@@ -214,12 +364,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 
 	}
 
-	function getDSN($opts){
-		//I want to use something to will db independant for max fleaxility.
-		//It appears php is going towards pdo, so that is the choice for now
-		return new PDO("{$opts['driver']}:host={$opts['dbhost']};{$opts['dbname']}",$opts['dbuser'],$opts['dbpass']);
-	}
-
 	/* This function gets the term_id of the named term in the named taxonomy.
 	*  if the the term n the taxonomy doesn't exsists it is added.  
 	*  It returns the term_id of the given term
@@ -235,34 +379,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 			return $_term['term_id'];
 		}
 	}
-
-
-	function data_feed_import($type = null){
-		global $wpdb;
-		if($this->isGood($type)){
-			$options = get_option('wpe_data_feed');
-			if($type=='Products'){
-				updateProduct($options[$type]);
-			}
-		}
-		//Ok, didn't define which type to do, so do them all
-		else{
-			data_feed_import('Products');
-			data_feed_import('Variants');
-			data_feed_import('Categories');
-		}
-
-	}
-	/*      
-	* This just calls the import Function and gets the debug data to the
-	* user in the winretail admin page
-	*/
-	function data_debug_action_callback(){
-
-		$type = $this->isGood($_POST['type'])? $_POST['type'] : 'Products';
-		print_r(data_feed_import($type));
-	}   
-
 
 
 	/*

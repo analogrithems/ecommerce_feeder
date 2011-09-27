@@ -137,7 +137,7 @@ class WPEC_Users extends WPEC_ecommerce_feeder{
 			}
 			if($this->isGood($encrypted)){
 				$this->setEncryptedPassword($user_id,$encrypted);
-				$this->logger->info("Setting previously encrypted password: {$user_id}={$encrypted}");
+				$this->logger->info("Setting previously encrypted password: {$username}={$encrypted}");
 			}
 			//TODO handle billing & shipping address
 						
