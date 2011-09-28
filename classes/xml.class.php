@@ -105,33 +105,38 @@ class EF_XML_Helper extends WPEC_ecommerce_feeder{
 
 
 	/**
-	 * Convert an XML document to a multi dimensional array
-	 * Pass in an XML document (or SimpleXMLElement object) and this recrusively loops through and builds a representative array
-	 *
-	 * @param string $xml - XML document - can optionally be a SimpleXMLElement object
-	 * @return array
-	 */
+	* Convert an XML document to a multi dimensional array
+	* Pass in an XML document (or SimpleXMLElement object) and this recrusively loops through and builds a representative array
+	*
+	* @param string $xml - XML document - can optionally be a SimpleXMLElement object
+	* @return array ARRAY
+	*/
 	public static function toArray( $xml ) {
-	    if ( is_string( $xml ) ) $xml = new SimpleXMLElement( $xml );
-	    $children = $xml->children();
-	    if ( !$children ) return (string) $xml;
-	    $arr = array();
-	    foreach ( $children as $key => $node ) {
-		$node = EF_XML_Helper::toArray( $node );
+		if ( is_string( $xml ) ) $xml = new SimpleXMLElement( $xml );
+		$children = $xml->children();
+		if ( !$children ) return (string) $xml;
+		$arr = array();
+		foreach ( $children as $key => $node ) {
+		    $node = EF_XML_Helper::toArray( $node );
 
-		// support for 'anon' non-associative arrays
-		if ( $key == 'anon' ) $key = count( $arr );
+		    if(is_string($node)) $node = html_entity_decode($node,ENT_QUOTES);
 
-		// if the node is already set, put it into an array
-		if ( isset( $arr[$key] ) ) {
-		    if ( !is_array( $arr[$key] ) || $arr[$key][0] == null ) $arr[$key] = array( $arr[$key] );
-		    $arr[$key][] = html_entity_decode($node,ENT_QUOTES);
-		} else {
-		    $arr[$key] = html_entity_decode($node,ENT_QUOTES);
+		    // support for 'anon' non-associative arrays
+		    if ( $key == 'anon' ) $key = count( $arr );
+
+		    // if the node is already set, put it into an array
+		    if ( isset( $arr[$key] ) ) {
+			if ( !is_array( $arr[$key] ) || $arr[$key][0] == null ) $arr[$key] = array( $arr[$key] );
+			$arr[$key][] = $node;
+		    } else {
+			$arr[$key] = $node;
+		    }
 		}
-	    }
-	    return $arr;
+		global $logger;
+		return $arr;
 	}
+
+
 
 	/**
 	 * function is_assoc( $array )

@@ -29,9 +29,9 @@ class xmlJobs extends WPEC_Jobs{
 	}
 
         function validate($data){
-		$this->logger->info("Calling xml validate");
-                if(!$this->isGood($data['source_xml']) && empty($_FILE['source'])){
-                        $this->setError("Must Give A URL to Download XML From!");
+                $this->logger->debug("XML validation");
+                if(!$this->isGood($_FILES['source']) && !$this->isGood($data['source'])){
+                        $this->setError("Must Upload a File!");
                         return false;
                 }
                 return true;
@@ -41,7 +41,7 @@ class xmlJobs extends WPEC_Jobs{
 		?>
 		<div id='<?php echo $this->script; ?>' class='hideonstart'>
 			<span class='inputLine'>
-				<strong>XML URL: </strong><input type='text' name='wpec_data_feeder[source_xml]' value='<?php echo fromRequest('source_xml'); ?>'> or <input type='file' name='source'>
+			<input type='file' name='source'>
 			</span>
 		</div>
 		<?php
@@ -87,6 +87,9 @@ class xmlJobs extends WPEC_Jobs{
 		include_once('xml.class.php');
 		$xml = new EF_XML_Helper();
 		$d = $xml->toArray(file_get_contents($file));
+		$na = substr($data_type, 0,-1);
+		$d = $d[$na];
+		$this->logger->debug("XML Array to import from:".print_r($d,1));
 
 		if(isset($limit) && is_array($limit) && is_numeric($limit['x'])){
 			$this->logger->debug("Limit Range had been defined: {$limit['x']} - {$limit['y']}");

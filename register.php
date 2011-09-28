@@ -17,7 +17,12 @@ Author URI: http://www.analogrithems.com
 
 global $logger, $ecom_plugin;
 define('ECOMMERCE_FEEDER', '20110701');
-define('ECOMMFEEDER_DEBUG', 8);
+
+//Only uncomment if you want to do debugging
+//define('ECOMMFEEDER_DEBUG', 8);
+
+
+
 $ecom_plugin = WP_PLUGIN_DIR . '/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
 
 
