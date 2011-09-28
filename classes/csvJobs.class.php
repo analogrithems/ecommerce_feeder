@@ -9,6 +9,8 @@ class csvJobs extends WPEC_Jobs{
                 add_filter('ecommerce_feeder_export_form', array($this, 'exportForm'));
 		add_filter('ecommerce_feeder_validateJob_'.$this->script, array($this, 'validate'));
 		add_action('ecommerce_feeder_run_import_'.$this->script, array($this, 'import'),10,2);
+		add_filter('ecommerce_feeder_import_get_count_'.$this->script, array($this, 'importCount'),10,2);
+		add_filter('ecommerce_feeder_export_get_count_'.$this->script, array($this, 'exportCount'),10,2);
 		add_action('ecommerce_feeder_run_export_'.$this->script, array($this, 'export'),10,2);
 		add_filter('ecommerce_feeder_register_script', array($this, 'registerScript'));
 	}
@@ -27,8 +29,9 @@ class csvJobs extends WPEC_Jobs{
 	}
 
 	function validate($data){
-		if(!$this->isGood($data['source_csv'])){
-			$this->setError("Must Give A URL to Download CSV From!");
+		$this->logger->debug("CSV validation");
+		if(!$this->isGood($_FILES['source']) && !$this->isGood($data['source'])){
+			$this->setError("Must Upload a File!");
 			return false;
 		}
 		return true;
@@ -39,7 +42,7 @@ class csvJobs extends WPEC_Jobs{
 		?>
 		<div id='<?php echo $this->script; ?>' class='hideonstart'>
 			<span class='inputLine'>
-				<strong>CSV URL: </strong><input type='text' name='wpec_data_feeder[source_csv]' value='<?php echo fromRequest('source_csv'); ?>'> or <input type='file' name='source'>
+				<strong>CSV URL: </strong> <input type='file' name='source'>
 			</span>
 		</div>
 		<?php
@@ -56,25 +59,45 @@ class csvJobs extends WPEC_Jobs{
 
 	}
 
+	function importCount($data_type,$formFields){
+		global $wpdb, $dbprefix;
+		extract($formFields);
+
+                if(file_exists($_FILES['source']['tmp_name'])){
+                        $file = $_FILES['source']['tmp_name'];
+                        $name = $_FILES['source']['name'];
+			$uploads = wp_upload_dir();
+			$npath = $uploads['path'].'/'.$name;
+			$_SESSION['source_file'] = $npath;
+                        $this->logger->info("Using Uploaded file:".print_r($_FILES,true));
+			$uploads = wp_upload_dir();
+			move_uploaded_file($file,$npath);
+                }else{
+			$this->logger->error("No file uploaded for csv import");
+		}
+
+		$count = $this->countLines($npath);
+		$this->logger->debug("CSVImport file has {$count} lines");
+		return $count;
+	}
 	function import($data_type,$formFields){
 		extract($formFields);
 		//If you uploaded a file via browser, use that otherwise use whatever url was passed
-		if(file_exists($_FILES['source']['tmp_name'])){
-			 $file = $_FILES['source']['tmp_name'];
-			$this->logger->info("Using Uploaded file:".print_r($_FILES,true));
+		$file = $formFields['source'];
+	
+		$this->logger->debug("CSVImport: ".print_r($formFields,1));
+		if(isset($limit) && is_array($limit) && is_numeric($limit['x'])){
+			$this->logger->debug("Limit Range had been defined: {$limit['x']} - {$limit['y']}");
+			$dataSet = $this->csv2array($file,null,',','"',null,$limit['x'],$limit['y']);
+		}elseif(is_numeric($limit)){
+			$this->logger->debug("Limit, return row {$limit}");
+			$dataSet = $this->csv2array($file,null,',','"',null,$limit);
 		}else{
-			//TODO clean this up to
-			if(isset($source_csv) && parse_url($source_csv)) {
-				$result = $this->getFile($source_csv);
-				$this->logger->info("GetFile:".print_r($result,true));
-				if(isset($result['tmp_name']) &&
-					file_exists($result['tmp_name'])){
-					$file = $result['tmp_name'];
-				}
-			}
+			$this->logger->debug("No Limit set, return all");
+			$dataSet = $this->csv2array($file);
 		}
-		$dataSet = $this->csv2array($file);
 
+		$this->logger->debug('CSVImport::Importing:'.print_r($dataSet,1));
 		$this->runDataTypeImport($data_type,$dataSet);
 	}
 

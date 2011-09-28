@@ -164,7 +164,7 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	}
 
 
-	function getCount($instructions=false){
+	function getCount(&$instructions=false){
 		extract($instructions);
 		$scripts = apply_filters('ecommerce_feeder_register_script',array());
 		if(isset($direction) && $direction == 'import' && isset($type) &&  array_key_exists($type, $scripts[$direction])){
@@ -185,17 +185,17 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	* @param mixed $instructions
 	*
 	*/
-	function executeJob($instructions){
+	function executeJob(&$instructions){
 		$this->logger->debug("executeJob:".print_r($instructions,1));
 		extract($instructions);	
 		set_time_limit(0);
 		$scripts = apply_filters('ecommerce_feeder_register_script',array());
 		if(isset($direction) && $direction == 'import' && isset($type) &&  array_key_exists($type, $scripts[$direction])){
 			$valid = apply_filters('ecommerce_feeder_validateJob_'.$type,$instructions);
-			if($valid) do_action('ecommerce_feeder_run_import_'.$type,$object,$instructions);
+			if($valid) do_action('ecommerce_feeder_run_import_'.$type,$object,&$instructions);
 		}elseif(isset($direction) && $direction == 'export' && isset($type) &&  array_key_exists($type, $scripts[$direction])){
 			$dataSets = $this->runDataTypeExport($object);
-			do_action('ecommerce_feeder_run_export_'.$type,$object,$dataSets);
+			do_action('ecommerce_feeder_run_export_'.$type,$object,&$dataSets);
 		}
 	}	
 

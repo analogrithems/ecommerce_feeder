@@ -9,6 +9,8 @@ class sqlJobs extends WPEC_Jobs{
                 add_filter('ecommerce_feeder_validateJob_'.$this->script, array($this, 'validate'));
 		add_action('ecommerce_feeder_run_import_'.$this->script, array($this, 'import'),10,2);
 		add_filter('ecommerce_feeder_register_script', array($this, 'registerScript'));
+                add_filter('ecommerce_feeder_import_get_count_'.$this->script, array($this, 'importCount'),10,2);
+                add_filter('ecommerce_feeder_export_get_count_'.$this->script, array($this, 'exportCount'),10,2);
 	}
 
 	function registerScript($scripts){
@@ -57,6 +59,20 @@ class sqlJobs extends WPEC_Jobs{
         }
 
 
+	function importCount($data_type,$formFields){
+		extract($formFields);
+		//connect to sql
+		$db_handler = $this->getDSN(array('driver'=>$db_driver,'host'=>$dbhost,'dbname'=>$dbname,'user'=>$dbuser,'password'=>$dbpassword));
+		//get sql into array
+		if($this->isGood($source_sql)){
+			$result = $db_handler->query($source_sql);
+			return count($result->fetch(PDO::FETCH_ASSOC));
+		}else{
+			return 1;
+		}
+
+	}
+
 	function importForm($presets=false){
 		if(is_array($presets) && !$presets) extract($presets);
 		?>
@@ -85,11 +101,25 @@ class sqlJobs extends WPEC_Jobs{
 	
 	function import($data_type,$formFields){
 		extract($formFields);
+
+                if(isset($limit) && is_array($limit) && is_numeric($limit['x'])){
+                        $this->logger->debug("Limit Range had been defined: {$limit['x']} - {$limit['y']}");
+                        $limit = " LIMIT {$limit['x']}, {$limit['y']}";
+                }elseif(is_numeric($limit)){
+                        $this->logger->debug("Limit, return row {$limit}");
+                        $x = $limit; 
+                        $y = 1;
+                        $limit = " LIMIT {$x}, {$y}";
+                }else{
+                        $this->logger->debug("No Limit set, return all");
+                        $limit = '';
+                }
+
 		//connect to sql
 		$db_handler = $this->getDSN(array('driver'=>$db_driver,'host'=>$dbhost,'dbname'=>$dbname,'user'=>$dbuser,'password'=>$dbpassword));
 		//get sql into array
 		if($this->isGood($source_sql)){
-			$result = $db_handler->query($source_sql);
+			$result = $db_handler->query($source_sql.$limit);
 		}else{
 			return false;
 		}

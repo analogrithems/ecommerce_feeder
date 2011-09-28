@@ -17,7 +17,7 @@ Author URI: http://www.analogrithems.com
 
 global $logger, $ecom_plugin;
 define('ECOMMERCE_FEEDER', '20110701');
-define('ECOMMFEEDER_DEBUG', 5);
+define('ECOMMFEEDER_DEBUG', 8);
 $ecom_plugin = WP_PLUGIN_DIR . '/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
 
 
@@ -124,6 +124,9 @@ function display_wpe_data_feeder(){
 					$logger->debug("Running Debug");
 					if(isset($_REQUEST['wpec_data_feeder']) ) $count = $job->getCount($_REQUEST['wpec_data_feeder']);
 					$task = $_REQUEST['wpec_data_feeder'];
+					if(isset($_SESSION['source_file'])){
+						$task['source'] = $_SESSION['source_file'];
+					}
 					include('views/runJob.php');
 					die();
 					break;

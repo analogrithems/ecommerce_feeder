@@ -304,12 +304,14 @@ class WPEC_ecommerce_feeder{
 	*                        ie: array('fldname'=>'/pcre_regexp/') 
 	* @return array 
 	*/ 
-	function csv2array($csvfile,$fldnames=null,$sep=',',$protect='"',$filters=null){ 
+	function csv2array($csvfile,$fldnames=null,$sep=',',$protect='"',$filters=null,$line=null,$count=null){
 	    if(! $csv = file($csvfile) ) 
 		return FALSE; 
 
 	    # use the first line as fields names 
 	    if( is_null($fldnames) ){ 
+		    //if first row is column names make sure we offset line limit if in use
+		    if(!is_null($line)) $line++;
 		    $fldnames = array_shift($csv); 
 		    $fldnames = explode($sep,$fldnames); 
 		    $fldnames = array_map('trim',$fldnames); 
@@ -322,6 +324,19 @@ class WPEC_ecommerce_feeder{
 		    $fldnames = array_map('trim',$fldnames); 
 	    } 
 	     
+	    if(!is_null($line)){
+		if(!is_null($count)){
+			$tmp = array();
+			for($i=0;$i<$count;$i++){
+				$tmp[] = $csv[$line + $i];
+			}
+			$csv = $tmp;
+		}else{
+			$c[] = $csv[$line];
+			$csv = $c;
+		}
+	    }
+
 	    $i=0; 
 	    foreach($csv as $row){ 
 		    if($protect){ 
@@ -438,5 +453,14 @@ class WPEC_ecommerce_feeder{
 	}
 
 
+	function countLines($filepath) {
+		$handle = fopen( $filepath, "r" );
+		$count = 0;
+		while( fgets($handle) ) {
+			$count++;
+		}
+		fclose($handle);
+		return $count;
+	}
 }
 ?>
