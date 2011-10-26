@@ -11,7 +11,7 @@ class WP_Logger{
 			$this->file = $file;
 		}
 		$this->strdate = 'Y/m/d';
-		$this->debug('Start Session',print_r($_SERVER,1));
+		$this->debug('Start Session:'.print_r($_SERVER,1));
 	}
 
 	function log($level=debug,$msg=false){
