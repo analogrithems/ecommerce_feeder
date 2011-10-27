@@ -9,30 +9,21 @@ WP eCommerce Feeder plugin used to import and export data for products, customer
 
 == Description ==
 
-This is the long description.  No limit, and you can use Markdown (as well as in the following sections).
+This is a plugin for Wordpress e-Commerce <http://getshopped.org/>
 
-For backwards compatibility, if this section is missing, the full length of the short description will be used, and
-Markdown parsed.
+It provides some advanced functionality to really help people get up and going quickly with Wordpress eCommerce. It allows you to do mass imports of products, users and orders.  Or perhaps you want to pull the data back out.  Well the export can do that for you.  You have the choice of working with any of the following formats
+•       CSV
+•       XML
+•       SQL
 
-A few notes about the sections above:
 
-*   "Contributors" is a comma separated list of wp.org/wp-plugins.org usernames
-*   "Tags" is a comma separated list of tags that apply to the plugin
-*   "Requires at least" is the lowest version that the plugin will work on
-*   "Tested up to" is the highest version that you've *successfully used to test the plugin*. Note that it might work on
-higher versions... this is just the highest one you've verified.
-*   Stable tag should indicate the Subversion "tag" of the latest stable version, or "trunk," if you use `/trunk/` for
-stable.
+This plugin has many uses such as migrating from an old outdated ecommerce cart like oscommerce or zencart over to Wordpress ecommerce.
 
-    Note that the `readme.txt` of the stable tag is the one that is considered the defining one for the plugin, so
-if the `/trunk/readme.txt` file says that the stable tag is `4.3`, then it is `/tags/4.3/readme.txt` that'll be used
-for displaying information about the plugin.  In this situation, the only thing considered from the trunk `readme.txt`
-is the stable tag pointer.  Thus, if you develop in trunk, you can update the trunk `readme.txt` to reflect changes in
-your in-development version, without having that information incorrectly disclosed about the current stable version
-that lacks those changes -- as long as the trunk's `readme.txt` points to the correct stable tag.
+This plugin even implements RPC XML so you can access your orders, products and user information via a nice easy to use XML api.
 
-    If no stable tag is provided, it is assumed that trunk is stable, but you should specify "trunk" if that's where
-you put the stable version, in order to eliminate any doubt.
+New API’s are being added to support common Order Management Solutions.  If you have an order management system you would like integrated with Wordpress ecommerce be sure to contact be at the site below.
+
+See the full documentation at http://www.analogrithems.com/rant/portfolio/wordpress-ecommerce-data-feeder/
 
 == Installation ==
 
@@ -40,9 +31,8 @@ This section describes how to install the plugin and get it working.
 
 e.g.
 
-1. Upload `plugin-name.php` to the `/wp-content/plugins/` directory
-1. Activate the plugin through the 'Plugins' menu in WordPress
-1. Place `<?php do_action('plugin_name_hook'); ?>` in your templates
+1. Upload `ecommerce-feeder` to the `/wp-content/plugins/` directory
+2. Activate the plugin through the 'Plugins' menu in WordPress
 
 == Frequently Asked Questions ==
 
