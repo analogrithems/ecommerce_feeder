@@ -4,7 +4,7 @@ Donate link: http://www.analogrithems.com/rant/portfolio/wordpress-ecommerce-dat
 Tags: WP eCommerce, Migration Tools, Import, Export
 Requires at least: 3.2.1
 Tested up to: 3.2.1
-tag: trunk
+Stable tag: trunk
 
 WP eCommerce Feeder plugin used to import and export data for products, customers and order history.
 
