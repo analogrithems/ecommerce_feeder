@@ -1,4 +1,4 @@
-=== Plugin Name ===
+=== eCommerce Feeder ===
 Contributors: analogrithems
 Donate link: http://www.analogrithems.com/rant/portfolio/wordpress-ecommerce-data-feeder/
 Tags: WP eCommerce, Migration Tools, Import, Export
