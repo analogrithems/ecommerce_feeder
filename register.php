@@ -19,7 +19,7 @@ global $logger, $ecom_plugin;
 define('ECOMMERCE_FEEDER', '20110701');
 
 //Only uncomment if you want to do debugging
-//define('ECOMMFEEDER_DEBUG', 8);
+define('ECOMMFEEDER_DEBUG', 0);
 
 
 
