@@ -77,6 +77,8 @@ class csvJobs extends WPEC_Jobs{
 		}
 
 		$count = $this->countLines($npath);
+		//First line is field definitions, reduce by one
+		$count--;
 		$this->logger->debug("CSVImport file has {$count} lines");
 		return $count;
 	}
@@ -90,6 +92,7 @@ class csvJobs extends WPEC_Jobs{
 			$this->logger->debug("Limit Range had been defined: {$limit['x']} - {$limit['y']}");
 			$dataSet = $this->csv2array($file,null,',','"',null,$limit['x'],$limit['y']);
 		}elseif(is_numeric($limit)){
+			$limit--; //This makes sure we skip the header line
 			$this->logger->debug("Limit, return row {$limit}");
 			$dataSet = $this->csv2array($file,null,',','"',null,$limit);
 		}else{
