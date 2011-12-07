@@ -16,7 +16,7 @@ Author URI: http://www.analogrithems.com
  */
 
 global $logger, $ecom_plugin;
-define('ECOMMERCE_FEEDER', '20110701');
+define('ECOMMERCE_FEEDER', '20120701');
 
 //Only uncomment if you want to do debugging
 define('ECOMMFEEDER_DEBUG', 0);
