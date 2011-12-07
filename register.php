@@ -3,7 +3,7 @@
 Plugin Name: WordPress Ecommerce Data Feeder
 Plugin URI: http://www.analogrithems.com/rant/2010/12/17/wordpress-data-feeder-plugin/
 Description: A utility to import and update the wp-e-commerce product catalog from another backend server
-Version: 0.1
+Version: 0.2
 Author: Analogrithems
 Author URI: http://www.analogrithems.com
 */
@@ -11,7 +11,7 @@ Author URI: http://www.analogrithems.com
 /*
  * @package Wordpress eCommerce Datafeeder
  * @author Analogrithems
- * @version 0.1-Dev
+ * @version 0.2-Dev
  * @license http://www.analogrithems.com/rant/portfolio/project-licensing/
  */
 
