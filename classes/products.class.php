@@ -49,7 +49,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				$this->logger->info("Row #{$r}");
 				if($this->isGood($row['style'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'style', 'meta_value'=>$row['style'] ) );
 				//elseif($this->isGood($row['sku'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'_wpsc_sku', 'meta_value'=>$row['sku']));
-				//elseif($this->isGood($row['upc'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'_wpsc_sku', 'meta_value'=>$row['upc']));
 				elseif($this->isGood($row['name'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'post_title'=>$row['name']));
 
 				//Meta the meta info ready
@@ -549,6 +548,12 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 					if($this->isGood($meta['_wpsc_price'])) $prod_tmp[$id]['price'] = $meta['_wpsc_price'];
 					if($this->isGood($meta['_wpsc_special_price'])) $prod_tmp[$id]['special_price'] = $meta['_wpsc_special_price'];
 					if($this->isGood($meta['_wpsc_stock'])) $prod_tmp[$id]['quantity'] = $meta['_wpsc_stock'];
+
+					//if no style is stored, then use the parent id as the style for export, that way we can do a new import
+					if(!$this->isGood($meta['style'])){
+						$prod_tmp[$id]['style'] = $post->ID;
+					}
+						
 					if($this->isGood($meta['_wpsc_sku'])){
 						$prod_tmp[$id]['sku'] = $meta['_wpsc_sku'];
 						$prod_tmp[$id]['upc'] = $prod_tmp[$id]['sku'];
