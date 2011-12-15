@@ -48,7 +48,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				//search products by style, don't waste time with name as it can be to hard to keep exact match
 				$this->logger->info("Row #{$r}");
 				if($this->isGood($row['style'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'style', 'meta_value'=>$row['style'] ) );
-				//elseif($this->isGood($row['sku'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'_wpsc_sku', 'meta_value'=>$row['sku']));
 				elseif($this->isGood($row['name'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'post_title'=>$row['name']));
 
 				//Meta the meta info ready
@@ -74,27 +73,31 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				if($this->isGood($row['weight']) && is_numeric($row['weight']) ){
 					$row['meta']['_wpsc_product_metadata']['weight'] = $row['weight'];
 					unset($row['weight']);
-				}elseif($this->isGood($row['weight']) && $weight = strstr($row['weight'], 'kilogram',true)){
-					//weight is in gram, set it that way
+				}elseif($this->isGood($row['weight']) && $weight = $this->strstr($row['weight'], 'kilogram',true)){
 					$row['meta']['_wpsc_product_metadata']['display_weight_as'] = 'kilogram';
 					$row['meta']['_wpsc_product_metadata']['weight_unit'] = 'kilogram';
 					$row['meta']['_wpsc_product_metadata']['weight'] = $weight;
 					unset($row['weight']);
-				}elseif($this->isGood($row['weight']) && $weight = strstr($row['weight'], 'gram',true)){
-					//weight is in gram, set it that way
+				}elseif($this->isGood($row['weight']) && $weight = $this->strstr($row['weight'], 'gram',true)){
 					$row['meta']['_wpsc_product_metadata']['display_weight_as'] = 'gram';
 					$row['meta']['_wpsc_product_metadata']['weight_unit'] = 'gram';
 					$row['meta']['_wpsc_product_metadata']['weight'] = $weight;
 					unset($row['weight']);
-				}elseif($this->isGood($row['weight']) && $weight = strstr($row['weight'], 'once',true)){
-					//weight is in gram, set it that way
+				}elseif($this->isGood($row['weight']) && $weight = $this->strstr($row['weight'], 'once',true)){
 					$row['meta']['_wpsc_product_metadata']['display_weight_as'] = 'once';
 					$row['meta']['_wpsc_product_metadata']['weight_unit'] = 'once';
+					$row['meta']['_wpsc_product_metadata']['weight'] = $weight;
+					unset($row['weight']);
+				}elseif($this->isGood($row['weight']) && $weight = $this->strstr($row['weight'], 'pound',true)){
+					$row['meta']['_wpsc_product_metadata']['display_weight_as'] = 'pound';
+					$row['meta']['_wpsc_product_metadata']['weight_unit'] = 'pond';
 					$row['meta']['_wpsc_product_metadata']['weight'] = $weight;
 					unset($row['weight']);
 				}else{
 					$row['meta']['_wpsc_product_metadata']['weight'] = 1;
 				}
+
+
 				if($this->isGood($row['quantity']) && is_numeric($row['quantity']) ){
 					$row['meta']['_wpsc_stock']=$row['quantity'];
 					$row['meta']['quantity_limited']=1;

@@ -464,5 +464,17 @@ class WPEC_ecommerce_feeder{
 		fclose($handle);
 		return $count;
 	}
+
+	/*
+	 * This Function doesn't work the same pre php 5.3
+	 *
+	 */
+	function strstr($haystack, $needle, $before_needle=FALSE) {
+		//Find position of $needle or abort
+		if(($pos=strpos($haystack,$needle))===FALSE) return FALSE;
+
+		if($before_needle) return substr($haystack,0,$pos+strlen($needle));
+		else return substr($haystack,$pos);
+	}
 }
 ?>
