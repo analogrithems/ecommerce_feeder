@@ -3,7 +3,7 @@
 Plugin Name: WordPress Ecommerce Data Feeder
 Plugin URI: http://www.analogrithems.com/rant/2010/12/17/wordpress-data-feeder-plugin/
 Description: A utility to import and update the wp-e-commerce product catalog from another backend server
-Version: 0.2
+Version: 0.3
 Author: Analogrithems
 Author URI: http://www.analogrithems.com
 */
@@ -11,12 +11,12 @@ Author URI: http://www.analogrithems.com
 /*
  * @package Wordpress eCommerce Datafeeder
  * @author Analogrithems
- * @version 0.2-Dev
+ * @version 0.3-Dev
  * @license http://www.analogrithems.com/rant/portfolio/project-licensing/
  */
 
 global $logger, $ecom_plugin;
-define('ECOMMERCE_FEEDER', '20120701');
+define('ECOMMERCE_FEEDER', '20121401');
 
 //Only uncomment if you want to do debugging
 define('ECOMMFEEDER_DEBUG', 0);
@@ -77,14 +77,19 @@ function wpsc_data_feeder_init(){
 }
 
 function wpec_data_feed_styles(){
+	global $wp_version;
 	wp_enqueue_style( 'ecomm_data');
 	wp_enqueue_script('jquery-ui-core');
 	wp_enqueue_script('jquery-ui-widget');
 // WordPress 3.1 vs older version compatibility
-	if ( wp_script_is( 'jquery-ui-widget', 'registered' ) )
-		wp_enqueue_script( 'jquery-ui-progressbar', plugins_url( 'jquery-ui/jquery.ui.progressbar.min.js', __FILE__ ), array( 'jquery-ui-core', 'jquery-ui-widget' ), '1.8.6' );
-	else
-		wp_enqueue_script( 'jquery-ui-progressbar', plugins_url( 'jquery-ui/jquery.ui.progressbar.min.1.7.2.js', __FILE__ ), array( 'jquery-ui-core' ), '1.7.2' );
+	if($wp_version > 3.2){
+		if ( wp_script_is( 'jquery-ui-widget', 'registered' ) )
+			wp_enqueue_script( 'jquery-ui-progressbar', plugins_url( 'jquery-ui/jquery.ui.progressbar.min.js', __FILE__ ), array( 'jquery-ui-core', 'jquery-ui-widget' ), '1.8.6' );
+		else
+			wp_enqueue_script( 'jquery-ui-progressbar', plugins_url( 'jquery-ui/jquery.ui.progressbar.min.1.7.2.js', __FILE__ ), array( 'jquery-ui-core' ), '1.7.2' );
+	}else{
+		wp_enqueue_script('jquery-ui-progressbar');
+	}
 
 	wp_enqueue_style( 'jquery-ui-regenthumbs', plugins_url( 'jquery-ui/redmond/jquery-ui-1.7.2.custom.css', __FILE__ ), array(), '1.7.2' );
 }
@@ -133,7 +138,7 @@ function display_wpe_data_feeder(){
 						$task['source'] = $_SESSION['source_file'];
 					}
 					include('views/runJob.php');
-					die();
+					return true;
 					break;
 				case 'Save Job':
 					if(isset($_REQUEST['wpec_data_feeder'])){

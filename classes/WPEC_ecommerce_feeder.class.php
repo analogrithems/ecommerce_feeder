@@ -305,6 +305,7 @@ class WPEC_ecommerce_feeder{
 	* @return array 
 	*/ 
 	function csv2array($csvfile,$fldnames=null,$sep=',',$protect='"',$filters=null,$line=null,$count=null){
+	    ini_set('auto_detect_line_endings', true);
 	    if(! $csv = file($csvfile) ) 
 		return FALSE; 
 
@@ -454,6 +455,7 @@ class WPEC_ecommerce_feeder{
 
 
 	function countLines($filepath) {
+		ini_set('auto_detect_line_endings', true);
 		$handle = fopen( $filepath, "r" );
 		$count = 0;
 		while( fgets($handle) ) {
