@@ -106,6 +106,12 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 					$row['meta']['_wpsc_stock']='';
 				}
 
+				//Include a product sku
+				if($this->isGood($row['sku'])){
+					$row['meta']['_wpsc_sku'] = $row['sku'];
+					unset($row['sku']);
+				}
+
 
 				//Setup The custom meta info
 				foreach($row as $k=>$v){
@@ -175,6 +181,7 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				}
 				//Update the Meta
 				foreach ($row['meta'] as $meta_key => $meta_value ){
+					if($meta_key =='_wpsc_sku') $this->logger->debug("Trying to add a sku to {$product_id} of {$meta_value}");
 					if ($meta_key == "_wpsc_product_metadata") {
 						update_post_meta($product_id, $meta_key, $meta_value);
 					} else {
@@ -217,9 +224,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 			if($this->isGood($data['meta'])){
 				if($this->isGood($data['meta']['_wpsc_price']) && $_product_meta['_wpsc_price'] != $data['meta']['_wpsc_price']){
 					$_product_meta['_wpsc_price'] = array( $data['meta']['_wpsc_price']);
-				}
-				if($this->isGood($data['upc']) && $_product_meta['_wpsc_sku'] != $data['upc']){
-					$_product_meta['_wpsc_sku'] = array( $data['upc'] );
 				}
 				if($this->isGood($data['meta']['_wpsc_stock']) && $this->isGood($_product_meta['_wpsc_stock']) && $_product_meta['_wpsc_stock'] != $data['meta']['_wpsc_stock']){
 					$_product_meta['_wpsc_stock'] = array( $data['meta']['_wpsc_stock']);
@@ -326,9 +330,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		if($this->isGood($post_data['meta'])){
 			if($this->isGood($post_data['meta']['_wpsc_price']) && $child_product_meta['_wpsc_price'] != $post_data['meta']['_wpsc_price']){
 				$child_product_meta['_wpsc_price'] = array( $post_data['meta']['_wpsc_price']);		
-			}
-			if($this->isGood($post_data['upc']) && $child_product_meta['_wpsc_sku'] != $post_data['upc']){
-				$child_product_meta['_wpsc_sku'] = array( $post_data['upc'] );
 			}
 			if($this->isGood($post_data['meta']['_wpsc_stock']) && $this->isGood($child_product_meta['_wpsc_stock']) && $child_product_meta['_wpsc_stock'] != $post_data['meta']['_wpsc_stock']){
 				$child_product_meta['_wpsc_stock'] = array( $post_data['meta']['_wpsc_stock']);
@@ -556,7 +557,6 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 						
 					if($this->isGood($meta['_wpsc_sku'])){
 						$prod_tmp[$id]['sku'] = $meta['_wpsc_sku'];
-						$prod_tmp[$id]['upc'] = $prod_tmp[$id]['sku'];
 					}else{
 						$prod_tmp[$id]['sku'] = $id;
 					}
