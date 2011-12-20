@@ -45,6 +45,11 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 		foreach($products as $row){
 			$r++;
 			if($this->isGood($row)){
+
+				foreach($row as $key=>$val){
+					$row[$key] = iconv("UTF-8", "ISO-8859-1//IGNORE", $val);
+				}
+
 				//search products by style, don't waste time with name as it can be to hard to keep exact match
 				$this->logger->info("Row #{$r}");
 				if($this->isGood($row['style'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'style', 'meta_value'=>$row['style'] ) );
@@ -259,7 +264,12 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 			//Parent Doesn't Exsits, add it
 			$slug = preg_replace('/[\`\~\!\@\#\$\%\^\*\(\)\; \,\.\'\/\-]/i','_',$term);
 			$newTerm = wp_insert_term( $term, $taxonomy, array('slug'=>$slug, 'parent'=>$parent_id));
-			return $newTerm['term_id'];
+			if(get_class($newTerm) == 'WP_Error'){
+				$this->logger->error('getVariant import error:'.print_r($newTerm,1),'error');
+				return false;
+			}else{
+				return $newTerm['term_id'];
+			}
 		}else{
 			return $_term['term_id'];
 		}
