@@ -53,6 +53,10 @@ class WPEC_Users extends WPEC_ecommerce_feeder{
                 
                 foreach($users as $row){
 			$r++;
+			//Scrub non-utf8 data
+			foreach($row as $key=>$val){
+				$row[$key] = iconv("UTF-8", "ISO-8859-1//IGNORE", $val);
+			}
 			
 			if($this->isGood($row['username'])){
 				$username = $row['username'];
@@ -111,13 +115,22 @@ class WPEC_Users extends WPEC_ecommerce_feeder{
 				$user_id = wp_insert_user( $user );
 				if(is_numeric($user_id)){
 					$results['added']++;
+					$_SESSION['status_msg'] .= __("Adding New User: ",'ecommerce_feeder').$username.' Email: '.$email;
 					$this->logger->info('Adding new user: '.$username.' Email: '.$email);
+				}else{
+					$_SESSION['error_msg'] .= __("Failed Adding New User: ",'ecommerce_feeder').print_r($user,1);
 				}
+					
 			} else {
 				if(is_numeric($user_id)){
 					$user['ID'] = $user_id;
-					if(wp_insert_user($user)) $this->logger->info('Updating user: '.$username.' Email: '.$email);
-					else $this->logger->warn('Failed to udpate user:'.$username.' with '.print_r($row,true));
+					if(wp_insert_user($user)){
+						$_SESSION['status_msg'] .= __("Updating User: ",'ecommerce_feeder').$username.' Email: '.$email;
+						$this->logger->info('Updating user: '.$username.' Email: '.$email);
+					}else{
+						$_SESSION['error_msg'] .= __("Failed Adding New User: ",'ecommerce_feeder').print_r($user,1);
+						$this->logger->warn('Failed to udpate user:'.$username.' with '.print_r($row,true));
+					}
 					$results['updated']++;
 				}
 				
@@ -130,8 +143,8 @@ class WPEC_Users extends WPEC_ecommerce_feeder{
 					$wpec_data[$wpec] = $value;
 					$update_wpec = true;
 				}else{
-					if(!update_user_meta($user_id, $field, $value)){
-						$this->logger->warn("Failed to update user_id:".print_r($user_id,1)." meta:".print_r($field,1)."=".print_r($value,1)."\nFrom:".print_r($row,true));
+					if($res = update_user_meta($user_id, $field, $value)){
+						$this->logger->warn("Failed to update user_id:".print_r($user_id,1)." meta:".print_r($field,1)."=".print_r($value,1)."\nFrom:".print_r($row,true).':Result was:'.print_r($res,1));
 					}
 				}
 			}
