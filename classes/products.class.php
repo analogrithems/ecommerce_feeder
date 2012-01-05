@@ -47,13 +47,15 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 			if($this->isGood($row)){
 
 				foreach($row as $key=>$val){
-					$row[$key] = iconv("UTF-8", "ISO-8859-1//IGNORE", $val);
+					$key = mb_convert_encoding($key, 'UTF-8');
+					$row[$key] = mb_convert_encoding($val, 'UTF-8');
 				}
 
 				//search products by style, don't waste time with name as it can be to hard to keep exact match
 				$this->logger->info("Row #{$r}");
 				if($this->isGood($row['style'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'meta_key'=>'style', 'meta_value'=>$row['style'] ) );
 				elseif($this->isGood($row['name'])) $product = query_posts( array( 'post_type' => 'wpsc-product', 'post_title'=>$row['name']));
+				else $product = false;
 
 				//Meta the meta info ready
 				$row['meta']['_wpsc_price'] = abs((float)str_replace( ',','',$this->isGood($row['price']) ? $row['price'] : '' ));
@@ -174,18 +176,21 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 				}
 				//This sets the category, if category doesn't exists it makes it.
 				if($this->isGood($row['category'])){
-					$categoryPath = explode('->',$row['category']);
-					if(count($categoryPath) > 1){
-						$pid = $this->getVariant($categoryPath[0],'wpsc_product_category');
-						for($i=1;count($categoryPath) > $i;$i++){
-							$pid = $this->getVariant($categoryPath[$i],'wpsc_product_category',$pid);
+					$categories = explode('|',preg_replace('/\s+\|\s+/','|',$row['category']));
+					foreach($categories as $cat){
+						$categoryPath = explode('->',$cat);
+						if(count($categoryPath) > 1){
+							$pid = $this->getVariant($categoryPath[0],'wpsc_product_category');
+							for($i=1;count($categoryPath) > $i;$i++){
+								$pid = $this->getVariant($categoryPath[$i],'wpsc_product_category',$pid);
+							}
+							$row['category'] = (int)$pid;
+						}else{
+							$row['category'] = (int)$this->getVariant($categoryPath[0],'wpsc_product_category');
 						}
-						$row['category'] = (int)$pid;
-					}else{
-						$row['category'] = (int)$this->getVariant($categoryPath[0],'wpsc_product_category');
+						$this->logger->info("Adding {$row['category']} to productid {$product_id}");
+						wp_set_object_terms($product_id,$row['category'],'wpsc_product_category',true);
 					}
-					$this->logger->info("Adding {$row['category']} to productid {$product_id}");
-					wp_set_object_terms($product_id,$row['category'],'wpsc_product_category');
 				}
 				//Update the Meta
 				foreach ($row['meta'] as $meta_key => $meta_value ){

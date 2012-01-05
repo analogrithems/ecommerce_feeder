@@ -3,7 +3,7 @@ Contributors: analogrithems
 Donate link: http://www.analogrithems.com/rant/portfolio/wordpress-ecommerce-data-feeder/
 Tags: WP eCommerce, Migration Tools, Import, Export
 Requires at least: 3.2.1
-Tested up to: 3.3
+Tested up to: 3.3.1
 Stable tag: trunk
 
 WP eCommerce Feeder plugin used to import and export data for products, customers and order history.
@@ -43,6 +43,9 @@ Look under Tools in the Dashboard for eCommerce Feeder.
 See http://www.analogrithems.com/rant/portfolio/wordpress-ecommerce-data-feeder/  
 it has information on the formats, field names & column headings
 
+= Something is not working what do I do? =
+www.analogrithems.com/rant/forums/topic/ecommerce-feeder/
+
 
 == Screenshots ==
 
@@ -50,12 +53,21 @@ it has information on the formats, field names & column headings
 
 == Changelog ==
 
-= 0.3.3 = 
+= 0.3.5 =
+* Another attempt to correct UTF 8 issues
+* Updated category code to make it work with more than one category like images and tags
+
+= 0.3.4 =
+* Update users import to filter non-utf8 data and give proper responses to imorter job
+* Fixed limit on user import to respect ajax lumping
+
+= 0.3.3 =
 * Fixed bug with non-UTF8 data breaking imports
 
-= 0.3.2 = 
+= 0.3.2 =
 * Updated to support new WP 3.3 changes and fixed a variant bug
 
 = 0.1 =
 * Inital version allows for XML, CSV SQL import.  XML & CSV export
+
 
