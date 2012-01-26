@@ -3,7 +3,7 @@
 Plugin Name: WordPress Ecommerce Data Feeder
 Plugin URI: http://www.analogrithems.com/rant/2010/12/17/wordpress-data-feeder-plugin/
 Description: A utility to import and update the wp-e-commerce product catalog from another backend server
-Version: 0.3.5
+Version: 0.3.6
 Author: Analogrithems
 Author URI: http://www.analogrithems.com
 */
@@ -11,15 +11,15 @@ Author URI: http://www.analogrithems.com
 /*
  * @package Wordpress eCommerce Datafeeder
  * @author Analogrithems
- * @version 0.3.3-Dev
+ * @version 0.3.6-Dev
  * @license http://www.analogrithems.com/rant/portfolio/project-licensing/
  */
 
 global $logger, $ecom_plugin;
-define('ECOMMERCE_FEEDER', '2012010401');
+define('ECOMMERCE_FEEDER', '2012012501');
 
 //Only uncomment if you want to do debugging
-define('ECOMMFEEDER_DEBUG', 0);
+define('ECOMMFEEDER_DEBUG', 9);
 
 
 
@@ -29,10 +29,10 @@ $ecom_plugin = WP_PLUGIN_DIR . '/'.str_replace(basename( __FILE__),"",plugin_bas
 include_once('classes/WPEC_ecommerce_feeder.class.php');
 include_once('classes/xml.class.php');
 include_once('classes/jobs.class.php');
-
+do_action('ecommerce-feeder-init');
 //Implement a real debugging system
 require_once ($ecom_plugin.'classes/WP_Logger.class.php');
-$logger = new WP_Logger($ecom_plugin.'/ecommerce_feeder.log');
+$logger = new WP_Logger($ecom_plugin.'/ecommerce-feeder.log');
 
 /**
 * This is where we hook in our XML-RPC service,  got claim our xml methods
@@ -71,7 +71,7 @@ if (is_admin()){
 add_filter('wpsc_additional_pages', 'wpsc_add_data_feeder_page',10, 2);
 
 function wpsc_data_feeder_init(){
-	wp_register_style('ecomm_data', WP_PLUGIN_URL . '/ecommerce_feeder/views/css/ecommerce_data.css');
+	wp_register_style('ecomm_data', WP_PLUGIN_URL . '/ecommerce-feeder/views/css/ecommerce_data.css');
 	add_action( 'admin_print_styles', 'wpec_data_feed_styles' );
 	register_setting( 'wpe_data_feed', 'wpe_data_feed');
 }

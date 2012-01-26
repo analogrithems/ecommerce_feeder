@@ -146,7 +146,8 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 							$image_id = $this->image_handle_upload($image,$row['product_id']);
 						}
 					}
-					$_SESSION['status_msg'] .= __("Updating Product:",'ecommerce_feeder').$row['name'].'. ';
+					if(isset($_SESSION['status_msg'])) $_SESSION['status_msg'] .= __("Updating Product:",'ecommerce_feeder').$row['name'].'. ';
+					else $_SESSION['status_msg'] = __("Updating Product:",'ecommerce_feeder').$row['name'].'. ';
 					$result = $this->updateVariant($row['product_id'], $row);
 					$variantUpdates++;
 				}
@@ -165,7 +166,8 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 							$image_id = $this->image_handle_upload($image,$product_id);
 						}
 					}
-					$_SESSION['status_msg'] .= __("Adding Product:",'ecommerce_feeder').$row['name'].'. ';
+					if(isset($_SESSION['status_msg'])) $_SESSION['status_msg'] .= __("Adding Product:",'ecommerce_feeder').$row['name'].'. ';
+					else $_SESSION['status_msg'] = __("Adding Product:",'ecommerce_feeder').$row['name'].'. ';
 					$result = $this->updateVariant($product_id,$row);
 				}
 				//Products tags

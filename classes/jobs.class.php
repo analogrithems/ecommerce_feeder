@@ -174,8 +174,11 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
                         $dataSets = $this->runDataTypeExport($object);
                         $count = apply_filters('ecommerce_feeder_export_get_count_'.$type,$object,$dataSets);
                 }
-		if(isset($count)) return $count;
-		else return false;
+		if(isset($count) && $count > 0) return $count;
+		else{
+			$_SESSION['error_msg'] = __("Record count invalid, bailing!",'ecommerce_feeder');
+			return false;
+		}
 	}
 
 	/**
@@ -195,7 +198,7 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 			if($valid) do_action('ecommerce_feeder_run_import_'.$type,$object,&$instructions);
 		}elseif(isset($direction) && $direction == 'export' && isset($type) &&  array_key_exists($type, $scripts[$direction])){
 			$dataSets = $this->runDataTypeExport($object);
-			do_action('ecommerce_feeder_run_export_'.$type,$object,&$dataSets);
+			do_action('ecommerce_feeder_run_export_'.$type,$object,&$dataSets,&$instructions);
 		}
 	}	
 

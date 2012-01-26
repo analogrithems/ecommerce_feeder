@@ -81,7 +81,7 @@ global $count, $ids, $text_failures, $text_nofailures, $task;
 			// Clear out the empty list element that's there for HTML validation purposes
 			jQuery("#ecomfeeder-debuglist li").remove();
 
-			// Called after each resize. Updates debug information and the progress bar.
+			// Called after each product update. Updates debug information and the progress bar.
 			function EcommFeederUpdateStatus( id, success, response ) {
 				jQuery("#ecomfeeder-bar").progressbar( "value", ( rt_count / rt_total ) * 100 );
 				jQuery("#ecomfeeder-bar-percent").html( Math.round( ( rt_count / rt_total ) * 1000 ) / 10 + "%" );
@@ -104,6 +104,8 @@ global $count, $ids, $text_failures, $text_nofailures, $task;
 			function EcommFeederFinishUp() {
 				rt_timeend = new Date().getTime();
 				rt_totaltime = Math.round( ( rt_timeend - rt_timestart ) / 1000 );
+                                jQuery("#ecomfeeder-bar").progressbar( "value",  100 );
+                                jQuery("#ecomfeeder-bar-percent").html( "100%" );
 
 				jQuery('#ecomfeeder-stop').hide();
 
