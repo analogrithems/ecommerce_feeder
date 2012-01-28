@@ -31,6 +31,8 @@ e.g.
 
 1. Upload `ecommerce-feeder` to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
+3. (Only needed if installing from git)  Make sure the plugin directory 
+is name ecommerce-feeder, github may change the name depending on commit version
 
 == Frequently Asked Questions ==
 

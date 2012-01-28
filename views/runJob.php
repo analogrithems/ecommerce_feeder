@@ -96,8 +96,22 @@ global $count, $ids, $text_failures, $text_nofailures, $task;
 					rt_errors = rt_errors + 1;
 					rt_failedlist = rt_failedlist + ',' + id;
 					jQuery("#ecomfeeder-debug-failurecount").html(rt_errors);
-					jQuery("#ecomfeeder-debuglist").append("<li>" + response.error + "</li>");
+					console.log(response);
+					if(response.error){
+						jQuery("#ecomfeeder-debuglist").append("<li>" +response.error+"</li>");
+					}else{
+						jQuery("#ecomfeeder-debuglist").append("<li>Bad response from Server, verify Wordpress Debugging is off!</li>");
+					}
 				}
+			}
+
+			function IsJsonString(str) {
+			    try {
+				JSON.parse(str);
+			    } catch (e) {
+				return false;
+			    }
+			    return true;
 			}
 
 			// Called when all task are done
@@ -130,6 +144,7 @@ global $count, $ids, $text_failures, $text_nofailures, $task;
 							EcommFeederUpdateStatus( id, true, response );
 						}
 						else {
+							alert('Bad response from server');
 							EcommFeederUpdateStatus( id, false, response );
 						}
 						if ( rt_count < rt_total && rt_continue){

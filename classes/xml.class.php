@@ -126,7 +126,7 @@ class EF_XML_Helper extends WPEC_ecommerce_feeder{
 
 		    // if the node is already set, put it into an array
 		    if ( isset( $arr[$key] ) ) {
-			if ( !is_array( $arr[$key] ) || $arr[$key][0] == null ) $arr[$key] = array( $arr[$key] );
+			if ( !is_array( $arr[$key] ) || !isset($arr[$key][0]) || $arr[$key][0] == null ) $arr[$key] = array( $arr[$key] );
 			$arr[$key][] = $node;
 		    } else {
 			$arr[$key] = $node;
