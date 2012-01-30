@@ -48,12 +48,17 @@ it has information on the formats, field names & column headings
 = Something is not working what do I do? =
 www.analogrithems.com/rant/forums/topic/ecommerce-feeder/
 
+= My import runs but products don't show up, or keep making duplicates =
+Make sure you have a style column.  This is needed for updates as well as link varaints & parents
 
 == Screenshots ==
 
 1. The simple clean interface located under Tools
 
 == Changelog ==
+
+= 0.3.7 =
+* Handle ajax errors better
 
 = 0.3.6 =
 * Made a init hook to make sure other plugins don't get error when loading
