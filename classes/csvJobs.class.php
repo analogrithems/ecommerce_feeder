@@ -95,7 +95,6 @@ class csvJobs extends WPEC_Jobs{
 			$this->logger->debug("Limit Range had been defined: {$limit['x']} - {$limit['y']}");
 			$dataSet = array_slice((array)$csv->parse_file(), $limit['x'], $limit['y']);
 		}elseif(is_numeric($limit)){
-			$limit++; //This makes sure we skip the header line
 			$this->logger->debug("Limit, return row {$limit}");
 			$dataSet = array_slice((array)$csv->parse_file(), $limit,1);
 		}else{
