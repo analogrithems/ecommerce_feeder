@@ -298,6 +298,8 @@ class WPEC_Jobs extends WPEC_ecommerce_feeder{
 	function ajax_job(){
 		global $user_ID;
 		@error_reporting( 0 ); // Don't break the JSON result
+		@define('WP_DEBUG',false);
+		@define('WP_DEBUG_DISPLAY', false);
 		@set_time_limit( 900 ); // 5 minutes per image should be PLENTY
 		header( 'Content-type: application/json' );
 	

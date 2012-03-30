@@ -1,4 +1,5 @@
 <?php
+include_once('parsecsv.lib.php');
 
 class csvJobs extends WPEC_Jobs{
 
@@ -86,18 +87,20 @@ class csvJobs extends WPEC_Jobs{
 		extract($formFields);
 		//If you uploaded a file via browser, use that otherwise use whatever url was passed
 		$file = $formFields['source'];
-	
+		$csv = new parseCSV($file);
+		$csv->auto();
+			
 		$this->logger->debug("CSVImport: ".print_r($formFields,1));
 		if(isset($limit) && is_array($limit) && is_numeric($limit['x'])){
 			$this->logger->debug("Limit Range had been defined: {$limit['x']} - {$limit['y']}");
-			$dataSet = $this->csv2array($file,null,',','"',null,$limit['x'],$limit['y']);
+			$dataSet = array_slice((array)$csv->parse_file(), $limit['x'], $limit['y']);
 		}elseif(is_numeric($limit)){
-			$limit--; //This makes sure we skip the header line
+			$limit++; //This makes sure we skip the header line
 			$this->logger->debug("Limit, return row {$limit}");
-			$dataSet = $this->csv2array($file,null,',','"',null,$limit);
+			$dataSet = array_slice((array)$csv->parse_file(), $limit,1);
 		}else{
 			$this->logger->debug("No Limit set, return all");
-			$dataSet = $this->csv2array($file);
+			$dataSet = (array)$csv->parse_file();
 		}
 
 		$this->logger->debug('CSVImport::Importing:'.print_r($dataSet,1));

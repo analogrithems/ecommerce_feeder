@@ -3,7 +3,7 @@
 //get our global vars inported
 global $objects, $types, $schedules, $db_drivers;
 ?>
-        <h2>WordPress eCommerce Data Feeder Import</h2>
+        <h2><?php _e('WordPress eCommerce Data Feeder Import','ecomfeeder');?></h2>
 
 	<?php
 		if(isset($_SESSION['status_msg'])){ ?>
@@ -26,7 +26,7 @@ global $objects, $types, $schedules, $db_drivers;
 
 	  <form method='post' enctype="multipart/form-data">
 		<div id="poststuff" class="postbox">
-                	<h3 class="hndle">Auto Import Data</h3>
+                	<h3 class="hndle"><?php _e('Auto Import Data','ecomfeeder');?></h3>
 				<div class="inside">
 					<script>
 						jQuery(document).ready( function() {
@@ -87,17 +87,17 @@ global $objects, $types, $schedules, $db_drivers;
 					</script>
 					<table class="form-table">
 						<tr valign="top">
-							<th scope="row">Name</th>
+							<th scope="row"><?php _e('Name','ecomfeeder');?></th>
 							<td><input type='text' name="wpec_data_feeder[name]" value="<?php echo fromRequest('name'); ?>"></td>
 						</tr>
 						<tr valign="top">
-							<th scope="row">Choose a Source</th>
+							<th scope="row"><?php _e('Choose a Source','ecomfeeder');?></th>
 							<td><select id='wpec_data_feeder_type' name='wpec_data_feeder[type]'>
 							    </select>
 							</td>
 						</tr>
 						<tr valign="top">
-							<th scope="row">Select a Purpose</th>
+							<th scope="row"><?php _e('Select a Purpose','ecomfeeder');?></th>
 							<td>
 							    <select id='wpec_data_feeder_object' name='wpec_data_feeder[object]'>
 							    </select>
@@ -127,3 +127,6 @@ global $objects, $types, $schedules, $db_drivers;
 		</div>
 	  </form>
 	</div>
+	<br />
+        <h3><?php _e('Need more formats?','ecomfeeder');?></h3>
+	<span><a href="http://getshopped.org/extend/premium-upgrades/"><?php _e('Click Here','ecomfeeder');?></a> <?php _e('To find additional import tools like importing from osCommerce, Zendcart, Cart66 and more','ecomfeeder');?></span>

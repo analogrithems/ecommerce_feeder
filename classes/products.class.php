@@ -139,7 +139,7 @@ class WPEC_Products extends WPEC_ecommerce_feeder{
 					$row['product_id'] = $product[0]->ID;
 					$row['ID'] = $product[0]->ID;
 					//if the product is no longer active, unpublish it.
-					if($this->isGood($row['active']) && $row['active'] == 0 ) wpsc_set_publish_status($row['product_id'], 'draft');
+					if($this->isGood($row['active']) && $row['active'] == 0 ) $row['post_status'] = 'draft';
 					if($this->isGood($row['image'])){
 						$images = explode(' | ', $row['image']);
 						foreach($images as $image){

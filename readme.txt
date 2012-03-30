@@ -57,6 +57,12 @@ Make sure you have a style column.  This is needed for updates as well as link v
 
 == Changelog ==
 
+= 0.4 =
+* Switched CSV parse library.  Previous one didn't handle eol and field delimiters very well, now using library from these fine chaps http://code.google.com/p/parsecsv-for-php/  
+* Added more protection from wordpress errors and warnings from breaking the ajax feedback.  
+* Added link to getshopped to get other formats for imnport/export
+* Removed a depreciated function from the products section
+
 = 0.3.7 =
 * Handle ajax errors better
 
